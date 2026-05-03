@@ -1,0 +1,8 @@
+{
+  "name": "education-management-system-root",
+  "private": true,
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend/my-app install",
+    "start:all": "node -e \"const { spawn } = require('child_process'); const backend = spawn('npm', ['run', 'dev'], { cwd: 'backend', stdio: 'inherit', shell: true }); const frontend = spawn('npm', ['run', 'dev'], { cwd: 'frontend/my-app', stdio: 'inherit', shell: true }); const stop = (code) => { try { backend.kill(); } catch {} try { frontend.kill(); } catch {} process.exit(code); }; process.on('SIGINT', () => stop(0)); process.on('SIGTERM', () => stop(0)); backend.on('exit', (code) => { if (code && code !== 0) stop(code); }); frontend.on('exit', (code) => { if (code && code !== 0) stop(code); });\""
+  }
+}
