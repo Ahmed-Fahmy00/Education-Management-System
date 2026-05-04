@@ -1,8 +1,36 @@
-const express = require('express');
-const healthRoutes = require('./health.routes');
+const express = require("express");
+const healthRoutes = require("./health");
+const studentRoutes = require("./students");
+const admissionRoutes = require("./admissions");
+const courseRoutes = require("./courses");
+const registrationRoutes = require("./registrations");
+const roomRoutes = require("./rooms");
+const bookingRoutes = require("./bookings");
+const maintenanceRoutes = require("./maintenance");
+const transcriptRoutes = require("./transcripts");
+const staffRoutes = require("./staff");
+const officeHourRoutes = require("./office-hours");
+const announcementRoutes = require("./announcements");
+const forumRoutes = require("./forum");
+const messageRoutes = require("./messages");
+const meetingRoutes = require("./meetings");
 
 const router = express.Router();
 
-router.use('/', healthRoutes);
+router.use("/", healthRoutes);
+router.use("/students", studentRoutes);
+router.use("/admissions", admissionRoutes);
+router.use("/courses", courseRoutes);
+router.use("/registrations", registrationRoutes);
+router.use("/rooms", roomRoutes);
+router.use("/bookings", bookingRoutes);
+router.use("/maintenance", maintenanceRoutes);
+router.use("/transcripts", transcriptRoutes);
+router.use("/staff", staffRoutes);
+router.use("/office-hours", officeHourRoutes);
+router.use("/announcements", announcementRoutes);
+router.use("/forum", forumRoutes);
+router.use("/messages", messageRoutes);
+router.use("/meetings", meetingRoutes);
 
 module.exports = router;
