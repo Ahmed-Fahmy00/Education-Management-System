@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const studentSchema = new mongoose.Schema(
+const staffSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: {
@@ -13,21 +13,17 @@ const studentSchema = new mongoose.Schema(
     password: { type: String, required: true, trim: true },
     role: {
       type: String,
-      enum: ["student"],
-      default: "student",
+      enum: ["instructor", "admin"],
+      required: true,
     },
     registrationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "RegistrationApplication",
     },
-    studentId: { type: String, trim: true, sparse: true },
-    firstName: { type: String, trim: true },
-    lastName: { type: String, trim: true },
     department: { type: String, trim: true },
-    parentEmail: { type: String, lowercase: true, trim: true },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
 
-module.exports = mongoose.model("Student", studentSchema);
+module.exports = mongoose.model("Staff", staffSchema);

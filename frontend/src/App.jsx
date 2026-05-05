@@ -2,35 +2,69 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Application from "./pages/Application";
 import Home from "./pages/Home";
+import Admin from "./pages/Admin";
 import "./App.css";
 
-function ProtectedRoute({ children }) {
+function getStoredUser() {
+  const storedUser = localStorage.getItem("user");
+  if (!storedUser) return null;
+
+  try {
+    return JSON.parse(storedUser);
+  } catch {
+    return null;
+  }
+}
+
+function ProtectedRoute({ children, allowedRoles }) {
   const token = localStorage.getItem("token");
   if (!token) {
     return <Navigate to="/login" replace />;
   }
+
+  if (allowedRoles && allowedRoles.length > 0) {
+    const user = getStoredUser();
+    if (!user || !allowedRoles.includes(user.role)) {
+      return (
+        <Navigate to={user?.role === "admin" ? "/admin" : "/home"} replace />
+      );
+    }
+  }
+
   return children;
 }
 
 function AuthRoute({ children }) {
   const token = localStorage.getItem("token");
   if (token) {
-    return <Navigate to="/home" replace />;
+    const user = getStoredUser();
+    return (
+      <Navigate to={user?.role === "admin" ? "/admin" : "/home"} replace />
+    );
   }
   return children;
+}
+
+function RootRedirect() {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const user = getStoredUser();
+  return <Navigate to={user?.role === "admin" ? "/admin" : "/home"} replace />;
 }
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/" element={<RootRedirect />} />
         <Route
           path="/login"
           element={
             <AuthRoute>
-              {" "}
-              <Login />{" "}
+              <Login />
             </AuthRoute>
           }
         />
@@ -38,21 +72,27 @@ export default function App() {
           path="/application"
           element={
             <AuthRoute>
-              {" "}
-              <Application />{" "}
+              <Application />
             </AuthRoute>
           }
         />
         <Route
           path="/home"
           element={
-            <ProtectedRoute>
-              {" "}
-              <Home />{" "}
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <Home />
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<RootRedirect />} />
       </Routes>
     </BrowserRouter>
   );

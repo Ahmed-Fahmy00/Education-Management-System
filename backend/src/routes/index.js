@@ -1,5 +1,6 @@
 const express = require("express");
 const healthRoutes = require("./health");
+const userRoutes = require("./users");
 const studentRoutes = require("./students");
 const admissionRoutes = require("./admissions");
 const courseRoutes = require("./courses");
@@ -18,6 +19,7 @@ const meetingRoutes = require("./meetings");
 const router = express.Router();
 
 router.use("/", healthRoutes);
+router.use("/users", userRoutes);
 router.use("/students", studentRoutes);
 router.use("/admissions", admissionRoutes);
 router.use("/courses", courseRoutes);

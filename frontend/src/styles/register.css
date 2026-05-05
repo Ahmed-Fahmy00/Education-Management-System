@@ -158,6 +158,29 @@
   font-size: 0.95rem;
 }
 
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  color: #212529;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #0d6efd;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
 .input-wrapper {
   position: relative;
   display: flex;
@@ -227,7 +250,7 @@
 }
 
 .btn-next {
-  width: 50p;
+  width: 50px;
   padding: 0.75rem 1rem;
   background-color: #0d6efd;
   color: white;

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock } from "lucide-react";
 import "../styles/login.css";
 
 export default function Login() {
@@ -33,7 +32,7 @@ export default function Login() {
         const data = await response.json();
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/home");
+        navigate(data.user?.role === "admin" ? "/admin" : "/home");
       } else {
         alert("Login failed");
       }
@@ -58,10 +57,16 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="login-form">
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>
-                <div className="input-wrapper">
-                  <Mail size={18} className="input-icon" />
-                  <input id="email" name="email" type="email" placeholder="you@example.com" value={formData.email} onChange={handleChange} required className="input-with-icon" />
-                </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="input"
+                />
               </div>
 
               <div className="form-group">
@@ -71,22 +76,23 @@ export default function Login() {
                     Forgot password?
                   </a>
                 </div>
-                <div className="input-wrapper">
-                  <Lock size={18} className="input-icon" />
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="input-with-icon"
- />
-                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="input"
+                />
               </div>
 
-              <button type="submit" className="btn-login-full" disabled={loading} >
+              <button
+                type="submit"
+                className="btn-login-full"
+                disabled={loading}
+              >
                 {loading ? "Signing in..." : "Sign In"}
               </button>
             </form>
@@ -94,7 +100,11 @@ export default function Login() {
             <div className="login-footer">
               <p>
                 Don't have an account?{" "}
-                <button type="button" onClick={() => navigate("/application")} className="signup-link" >
+                <button
+                  type="button"
+                  onClick={() => navigate("/application")}
+                  className="signup-link"
+                >
                   Apply here
                 </button>
               </p>
