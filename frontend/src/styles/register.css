@@ -1,0 +1,358 @@
+/* Register Page Styles */
+
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.register-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto; /* ensure container is centered */
+}
+
+.register-card {
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  padding: 0px 30px;
+}
+
+.register-header {
+  text-align: center;
+  padding: 1.5rem 0px 0px 0px;
+  background-color: #ffffff;
+}
+
+.logo-icon-register {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 0.75rem;
+  background-color: #0d6efd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.logo-text-register {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0d6efd;
+}
+
+.register-subtitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 0.5rem;
+}
+
+.register-description {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.register-content {
+  padding: 0.5rem 30px 1.5rem 30px; /* reduced top padding to minimize space */
+}
+
+.register-form {
+  text-align: left; /* left-align labels and fields inside register form */
+}
+
+/* Progress Indicator */
+.progress-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  box-sizing: border-box; /* ensure box-sizing is applied */
+  margin: 0 0 2rem;
+}
+
+.step {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  color: #6c757d;
+  font-weight: 700;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.step.active {
+  background-color: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+}
+
+.step-line {
+  width: 40px;
+  height: 2px;
+  background-color: #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.step-line.active {
+  background-color: #0d6efd;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Two-column layout used by Application page */
+.register-form.two-column {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.register-form.two-column .full-width {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 600px) {
+  .register-form.two-column {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-step {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.step-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 0.75rem; /* reduce space after title */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #212529;
+  font-size: 0.95rem;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  color: #6c757d;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-with-icon {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 40px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  color: #212529;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.input-with-icon:focus {
+  outline: none;
+  border-color: #0d6efd;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.input-with-icon::placeholder {
+  color: #9ca3af;
+}
+
+.input-hint {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.select-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  color: #212529;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.select-input:focus {
+  outline: none;
+  border-color: #0d6efd;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.step-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.btn-next {
+  width: 50p;
+  padding: 0.75rem 1rem;
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-next:hover {
+  background-color: #0b5ed7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-back-text {
+  background: none;
+  border: none;
+  color: #0d6efd;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.btn-back-text:hover {
+  color: #0b5ed7;
+  text-decoration: underline;
+}
+
+.btn-register-full {
+  width: fit-content;
+  padding: 0.75rem 10px;
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 1rem auto 0;
+}
+
+.btn-register-full:hover:not(:disabled) {
+  background-color: #0b5ed7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-register-full:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.step-buttons-secondary {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.register-footer {
+  text-align: center;
+  padding: 1rem 0 0;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.signin-link {
+  background: none;
+  border: none;
+  color: #0d6efd;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.signin-link:hover {
+  color: #0b5ed7;
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .register-page {
+    padding: 1rem;
+  }
+
+  .register-container {
+    max-width: 100%;
+  }
+
+  .register-header {
+    padding: 2rem 1.5rem 1rem;
+  }
+
+  .register-content {
+    padding: 1.5rem;
+  }
+
+  .logo-text-register {
+    font-size: 1.5rem;
+  }
+
+  .register-subtitle {
+    font-size: 1rem;
+  }
+
+  .progress-indicator {
+    margin: 1.5rem 0;
+    gap: 0.75rem;
+  }
+
+  .step {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  .step-line {
+    width: 30px;
+  }
+}

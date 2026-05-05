@@ -35,7 +35,7 @@ function createApp() {
 }
 
 async function start() {
-  const port = Number(process.env.PORT) || 5000;
+  const port = Number(process.env.PORT) || 8000;
   const app = createApp();
 
   const mongoUri = process.env.MONGO_URI;
