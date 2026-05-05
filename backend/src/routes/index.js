@@ -15,6 +15,7 @@ const announcementRoutes = require("./announcements");
 const forumRoutes = require("./forum");
 const messageRoutes = require("./messages");
 const meetingRoutes = require("./meetings");
+const leaveRoutes = require("./leaveRoutes");
 
 const router = express.Router();
 
@@ -34,5 +35,6 @@ router.use("/announcements", announcementRoutes);
 router.use("/forum", forumRoutes);
 router.use("/messages", messageRoutes);
 router.use("/meetings", meetingRoutes);
+router.use("/leave", leaveRoutes);
 
 module.exports = router;
