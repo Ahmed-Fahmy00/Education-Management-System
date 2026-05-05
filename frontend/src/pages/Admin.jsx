@@ -38,7 +38,34 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    fetchApplications();
+    let isMounted = true;
+
+    (async () => {
+      try {
+        const response = await fetch("/api/users/admin/pending-applications");
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to load applications");
+        }
+
+        if (isMounted) {
+          setApplications(data.applications || []);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || "Failed to load applications");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleLogout = () => {

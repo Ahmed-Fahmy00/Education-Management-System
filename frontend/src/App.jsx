@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Application from "./pages/Application";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
+import CourseRequirements from "./pages/CourseRequirements";
 import "./App.css";
 
 function getStoredUser() {
@@ -81,6 +82,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["student", "instructor"]}>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/course-requirements"
+          element={
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <CourseRequirements />
             </ProtectedRoute>
           }
         />

@@ -1,30 +1,29 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, FileText, Settings, Bell } from "lucide-react";
+import { BookOpen, Bell, FileText, LogOut, Settings } from "lucide-react";
 import "../styles/home.css";
 
 export default function Home() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
+  const [user] = useState(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+
+    if (!storedUser) {
+      return null;
     }
-    setLoading(false);
-  }, []);
+
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      return null;
+    }
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");
   };
-
-  if (loading) {
-    return <div className="home-loading">Loading...</div>;
-  }
 
   if (!user) {
     return <div className="home-loading">No user data</div>;
@@ -71,6 +70,18 @@ export default function Home() {
         <div className="actions-section">
           <h2>Quick Actions</h2>
           <div className="actions-grid">
+            <div className="action-card">
+              <BookOpen size={32} className="action-icon" />
+              <h3>Study Plan</h3>
+              <p>View your core subjects and available electives</p>
+              <button
+                className="btn-action"
+                onClick={() => navigate("/course-requirements")}
+              >
+                Open Study Plan
+              </button>
+            </div>
+
             <div className="action-card">
               <FileText size={32} className="action-icon" />
               <h3>Applications</h3>

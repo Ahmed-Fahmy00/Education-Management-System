@@ -99,7 +99,7 @@ export default function Login() {
 
             <div className="login-footer">
               <p>
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <button
                   type="button"
                   onClick={() => navigate("/application")}

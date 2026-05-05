@@ -25,7 +25,8 @@ async function listCourses(req, res, next) {
 async function listStudentRequirements(req, res, next) {
   try {
     const { department } = req.query;
-    const query = department ? { department } : {};
+    const query = { isActive: true };
+    if (department) query.department = department;
     const courses = await coursesService.listCourses(query);
     const core = courses.filter((course) => course.type === "core");
     const electives = courses.filter((course) => course.type === "elective");
