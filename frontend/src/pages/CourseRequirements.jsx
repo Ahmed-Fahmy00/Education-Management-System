@@ -28,7 +28,11 @@ function readStoredUser() {
 export default function CourseRequirements() {
   const navigate = useNavigate();
   const [user] = useState(readStoredUser);
-  const [requirements, setRequirements] = useState({ core: [], electives: [] });
+  const [requirements, setRequirements] = useState({
+    core: [],
+    electives: [],
+    department: null,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -45,6 +49,7 @@ export default function CourseRequirements() {
         setRequirements({
           core: data.core || [],
           electives: data.electives || [],
+          department: data.department || null,
         });
       } catch (fetchError) {
         if (!isMounted) return;
@@ -73,6 +78,7 @@ export default function CourseRequirements() {
       setRequirements({
         core: data.core || [],
         electives: data.electives || [],
+        department: data.department || null,
       });
     } catch (fetchError) {
       setError(fetchError?.message || "Unable to load course requirements");
@@ -117,6 +123,10 @@ export default function CourseRequirements() {
           <article>
             <span>Student</span>
             <strong>{user.name}</strong>
+          </article>
+          <article>
+            <span>Department</span>
+            <strong>{requirements.department || user.department || "All"}</strong>
           </article>
         </div>
       </header>

@@ -1,10 +1,38 @@
 export async function apiFetch(path, options) {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  let storedUser = null
+
+  if (typeof window !== 'undefined') {
+    const rawUser = window.localStorage.getItem('user')
+    if (rawUser) {
+      try {
+        storedUser = JSON.parse(rawUser)
+      } catch {
+        storedUser = null
+      }
+    }
+  }
+
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+  }
+
+  if (storedUser?.id) {
+    defaultHeaders['x-user-id'] = storedUser.id
+  }
+
+  if (storedUser?.role) {
+    defaultHeaders['x-user-role'] = storedUser.role
+  }
+
+  if (storedUser?.department) {
+    defaultHeaders['x-user-department'] = storedUser.department
+  }
 
   const response = await fetch(normalizedPath, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...defaultHeaders,
       ...(options && options.headers ? options.headers : {}),
     },
   })

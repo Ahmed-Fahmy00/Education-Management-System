@@ -1,4 +1,7 @@
+const mongoose = require("mongoose");
 const coursesService = require("../services/courses");
+const registrationsService = require("../services/registrations");
+const studentsService = require("../services/students");
 
 async function createCourse(req, res, next) {
   try {
@@ -24,13 +27,48 @@ async function listCourses(req, res, next) {
 
 async function listStudentRequirements(req, res, next) {
   try {
-    const { department } = req.query;
+    const requestedDepartment = req.query.department?.trim();
+    let department = requestedDepartment || req.user?.department?.trim() || "";
+
+    if (!department && req.user?.id && mongoose.Types.ObjectId.isValid(req.user.id)) {
+      const student = await studentsService.getStudentById(req.user.id);
+      department = student?.department?.trim() || "";
+    }
+
     const query = { isActive: true };
-    if (department) query.department = department;
+    if (department) {
+      query.department = department;
+    }
+
     const courses = await coursesService.listCourses(query);
     const core = courses.filter((course) => course.type === "core");
     const electives = courses.filter((course) => course.type === "elective");
-    res.json({ core, electives });
+
+    let requiredCore = core;
+
+    if (department && req.user?.id && mongoose.Types.ObjectId.isValid(req.user.id)) {
+      const completedRegistrations = await registrationsService.listRegistrations({
+        student: req.user.id,
+        status: "completed",
+      });
+
+      const completedCourseIds = new Set(
+        completedRegistrations
+          .map((registration) => registration.course?._id || registration.course)
+          .filter(Boolean)
+          .map((courseId) => courseId.toString()),
+      );
+
+      requiredCore = core.filter(
+        (course) => !completedCourseIds.has(course._id.toString()),
+      );
+    }
+
+    res.json({
+      core: requiredCore,
+      electives,
+      department: department || null,
+    });
   } catch (err) {
     next(err);
   }
