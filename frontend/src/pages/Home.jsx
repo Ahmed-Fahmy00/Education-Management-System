@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Bell, FileText, LogOut, Settings } from "lucide-react";
+import { BookOpen, Bell, FileText, LogOut, Settings, DoorOpen } from "lucide-react";
 import "../styles/home.css";
 
 export default function Home() {
@@ -101,6 +101,18 @@ export default function Home() {
               <h3>Settings</h3>
               <p>Manage your account settings</p>
               <button className="btn-action">Go to Settings</button>
+            </div>
+
+            <div className="action-card">
+              <DoorOpen size={32} className="action-icon" />
+              <h3>Room Booking</h3>
+              <p>Find available rooms and manage bookings</p>
+              <button
+                className="btn-action"
+                onClick={() => navigate("/rooms")}
+              >
+                Manage Rooms
+              </button>
             </div>
           </div>
         </div>
