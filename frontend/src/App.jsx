@@ -4,6 +4,7 @@ import Application from "./pages/Application";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import CourseRequirements from "./pages/CourseRequirements";
+import Rooms from "./pages/Rooms";
 import "./App.css";
 
 function getStoredUser() {
@@ -102,6 +103,14 @@ export default function App() {
           }
         />
         <Route path="*" element={<RootRedirect />} />
+        <Route
+          path="/rooms"
+          element={
+            <ProtectedRoute allowedRoles={[]}>
+              <Rooms />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
