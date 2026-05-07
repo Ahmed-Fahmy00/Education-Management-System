@@ -7,6 +7,7 @@ import Profile from "./pages/Profile";
 import Announcements from "./pages/Announcements";
 import CourseRequirements from "./pages/CourseRequirements";
 import Rooms from "./pages/Rooms";
+import Chats from "./pages/Chats";
 import "./App.css";
 
 function getStoredUser() {
@@ -105,6 +106,14 @@ export default function App() {
           }
         />
         <Route
+          path="/chats"
+          element={
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <Chats />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/course-requirements"
           element={
             <ProtectedRoute allowedRoles={["student", "instructor"]}>
@@ -120,7 +129,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<RootRedirect />} />
         <Route
           path="/rooms"
           element={
@@ -129,6 +137,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<RootRedirect />} />
       </Routes>
     </BrowserRouter>
   );

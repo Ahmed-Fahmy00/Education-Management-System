@@ -150,10 +150,12 @@ export function UserLayout({ children, user, onLogout }) {
           </button>
 
           {/* Chats */}
-          <button className="hs-nav-item disabled" title="Coming soon">
+          <button
+            className={`hs-nav-item ${isActive("/chats") ? "active" : ""}`}
+            onClick={() => navTo("/chats")}
+          >
             <MessageSquare size={20} />
             <span>Chats</span>
-            <span className="hs-nav-soon">Soon</span>
           </button>
         </nav>
 
@@ -173,6 +175,7 @@ export function UserLayout({ children, user, onLogout }) {
             {location.pathname === "/rooms" && "Room Booking"}
             {location.pathname === "/profile" && "Profile"}
             {location.pathname === "/announcements" && "Announcements"}
+            {location.pathname === "/chats" && "Chats"}
           </span>
 
           <div className="hs-topbar-right" ref={menuRef}>
