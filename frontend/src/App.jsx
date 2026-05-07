@@ -3,6 +3,8 @@ import Login from "./pages/Login";
 import Application from "./pages/Application";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
+import Profile from "./pages/Profile";
+import Announcements from "./pages/Announcements";
 import CourseRequirements from "./pages/CourseRequirements";
 import Rooms from "./pages/Rooms";
 import "./App.css";
@@ -83,6 +85,22 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["student", "instructor"]}>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/announcements"
+          element={
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <Announcements />
             </ProtectedRoute>
           }
         />
