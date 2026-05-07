@@ -17,6 +17,7 @@ const registrationApplicationSchema = new mongoose.Schema(
       default: "student",
       required: true,
     },
+    department: { type: String, trim: true, default: "" },
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],

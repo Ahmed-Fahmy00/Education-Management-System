@@ -1,6 +1,7 @@
 const Student = require("../models/Student");
 const Staff = require("../models/Staff");
 const RegistrationApplication = require("../models/RegistrationApplication");
+const { generateStudentId, generateStaffId } = require("../utils/idGenerator");
 
 // Register a new user (pending application)
 exports.register = async (req, res) => {
@@ -8,7 +9,7 @@ exports.register = async (req, res) => {
     console.log("Register endpoint called");
     console.log("Request body:", req.body);
 
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, department } = req.body;
     const allowedRoles = ["student", "instructor"];
 
     // Validation
@@ -47,6 +48,7 @@ exports.register = async (req, res) => {
       email,
       password, // In production, hash this password
       role: role || "student",
+      department: department ? department.trim() : "",
       status: "pending",
     });
 
@@ -106,7 +108,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    const student = await Student.findOne({ email, isActive: true });
+    const student = await Student.findOne({ email });
     if (student && student.password === password) {
       return res.status(200).json({
         success: true,
@@ -117,11 +119,13 @@ exports.login = async (req, res) => {
           name: student.name,
           email: student.email,
           role: student.role,
+          studentId: student.studentId || null,
+          department: student.department || null,
         },
       });
     }
 
-    const staff = await Staff.findOne({ email, isActive: true });
+    const staff = await Staff.findOne({ email });
     if (staff && staff.password === password) {
       return res.status(200).json({
         success: true,
@@ -132,6 +136,8 @@ exports.login = async (req, res) => {
           name: staff.name,
           email: staff.email,
           role: staff.role,
+          staffId: staff.staffId || null,
+          department: staff.department || null,
         },
       });
     }
@@ -192,12 +198,15 @@ exports.approveApplication = async (req, res) => {
         registrationId: application._id,
       });
       if (!existingStudent) {
+        const studentId = await generateStudentId();
         await Student.create({
           name: application.name,
           email: application.email,
           password: application.password,
           role: "student",
           registrationId: application._id,
+          studentId,
+          department: application.department || "",
           isActive: true,
         });
       }
@@ -206,12 +215,15 @@ exports.approveApplication = async (req, res) => {
         registrationId: application._id,
       });
       if (!existingStaff) {
+        const staffId = await generateStaffId();
         await Staff.create({
           name: application.name,
           email: application.email,
           password: application.password,
           role: application.role,
           registrationId: application._id,
+          staffId,
+          department: application.department || "",
           isActive: true,
         });
       }
