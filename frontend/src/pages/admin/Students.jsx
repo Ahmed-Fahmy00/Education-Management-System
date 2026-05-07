@@ -16,8 +16,11 @@ import {
   CheckCircle,
   Users,
   Calendar,
+  FileText,
+  Printer
 } from "lucide-react";
 import { apiFetch, Badge, Spinner, EmptyState } from "./shared";
+import TranscriptDocument from "./TranscriptDocument";
 
 /* ── Shared department list (matches Courses.jsx) ───────────────────────── */
 const DEPARTMENTS = [
@@ -48,12 +51,12 @@ function StudentModal({ initial, onClose, onSaved }) {
   const [form, setForm] = useState(
     initial
       ? {
-          name: initial.name || "",
-          email: initial.email || "",
-          password: "",
-          department: initial.department || "",
-          parentEmail: initial.parentEmail || "",
-        }
+        name: initial.name || "",
+        email: initial.email || "",
+        password: "",
+        department: initial.department || "",
+        parentEmail: initial.parentEmail || "",
+      }
       : EMPTY_STUDENT,
   );
   const [saving, setSaving] = useState(false);
@@ -361,6 +364,8 @@ function DeleteConfirm({ student, onClose, onDeleted }) {
 function StudentDetail({ student, onBack, onEdit }) {
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [showTranscriptModal, setShowTranscriptModal] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -382,211 +387,237 @@ function StudentDetail({ student, onBack, onEdit }) {
 
   const initials = student.name
     ? student.name
-        .split(" ")
-        .slice(0, 2)
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
+      .split(" ")
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
     : "?";
+  const handleGenerateTranscript = async () => {
+    setGenerating(true);
+    try {
+      const res = await apiFetch(`/api/transcripts/${student._id}/generate`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        const updatedTranscript = await res.json();
+        setTranscript(updatedTranscript);
+      }
+    } catch (err) {
+      console.error("Failed to generate transcript", err);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   return (
     <>
-      {/* ── Back bar ── */}
-      <div style={{ marginBottom: 24 }}>
-        <button className="btn btn-secondary btn-sm" onClick={onBack}>
-          <ArrowLeft size={14} /> Back to Students
-        </button>
+      <div className="page-header">
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button className="btn btn-secondary btn-sm" onClick={onBack}>
+            <ArrowLeft size={14} /> Back
+          </button>
+          <div>
+            <h2 style={{ marginBottom: 2 }}>{student.name}</h2>
+            <p>{student.email}</p>
+          </div>
+        </div>
+        <Badge variant={student.isActive ? "success" : "danger"}>
+          {student.isActive ? "Active" : "Inactive"}
+        </Badge>
       </div>
 
-      {/* ── Hero card — all info here ── */}
-      <div
-        className="detail-hero-card"
-        style={{ marginBottom: 20, alignItems: "flex-start" }}
-      >
-        <div className="detail-hero-avatar" style={{ flexShrink: 0 }}>
-          {initials}
-        </div>
-        <div className="detail-hero-info" style={{ flex: 1 }}>
-          {/* Name + ID chip */}
-          <div className="detail-hero-name">{student.name}</div>
-          <div className="detail-hero-sub">{student.email}</div>
-          <div className="detail-hero-meta" style={{ marginBottom: 14 }}>
-            {student.studentId && (
-              <span className="detail-hero-chip mono">
-                <Hash size={12} /> {student.studentId}
-              </span>
-            )}
-            {student.department && (
-              <span className="detail-hero-chip">
-                <Building2 size={12} /> {student.department}
-              </span>
-            )}
-          </div>
-
-          {/* Inline detail grid */}
-          <div className="room-hero-details">
-            <div className="room-hero-detail-item">
-              <span className="room-hero-detail-label">
-                <Mail size={12} /> Email
-              </span>
-              <span
-                className="room-hero-detail-value"
-                style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  wordBreak: "break-all",
-                }}
-              >
-                {student.email}
-              </span>
-            </div>
-            <div className="room-hero-detail-item">
-              <span className="room-hero-detail-label">
-                <Hash size={12} /> Student ID
-              </span>
-              <span
-                className="room-hero-detail-value"
-                style={{ fontFamily: "monospace", fontSize: 13 }}
-              >
-                {student.studentId || "—"}
-              </span>
-            </div>
-            <div className="room-hero-detail-item">
-              <span className="room-hero-detail-label">
-                <Building2 size={12} /> Department
-              </span>
-              <span
-                className="room-hero-detail-value"
-                style={{ fontSize: 13, fontWeight: 500 }}
-              >
-                {student.department || "—"}
-              </span>
-            </div>
-            {student.parentEmail && (
-              <div className="room-hero-detail-item">
-                <span className="room-hero-detail-label">
-                  <Mail size={12} /> Parent Email
+      <div className="detail-grid-layout">
+        {/* Info */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="detail-card">
+            <div className="detail-card-title">Student Information</div>
+            <div className="detail-rows">
+              <div className="detail-row">
+                <span className="detail-label">
+                  <Hash size={13} /> Student ID
                 </span>
-                <span
-                  className="room-hero-detail-value"
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 500,
-                    wordBreak: "break-all",
-                  }}
-                >
-                  {student.parentEmail}
+                <span className="detail-value">{student.studentId || "—"}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">
+                  <Mail size={13} /> Email
+                </span>
+                <span className="detail-value">{student.email}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">
+                  <Building2 size={13} /> Department
+                </span>
+                <span className="detail-value">
+                  {student.department || "—"}
                 </span>
               </div>
-            )}
-            {(student.firstName || student.lastName) && (
-              <div className="room-hero-detail-item">
-                <span className="room-hero-detail-label">Full Name</span>
-                <span
-                  className="room-hero-detail-value"
-                  style={{ fontSize: 13, fontWeight: 500 }}
-                >
-                  {[student.firstName, student.lastName]
-                    .filter(Boolean)
-                    .join(" ")}
+              <div className="detail-row">
+                <span className="detail-label">Role</span>
+                <span className="detail-value">
+                  <Badge variant="info">student</Badge>
                 </span>
               </div>
-            )}
-            <div className="room-hero-detail-item">
-              <span className="room-hero-detail-label">
-                <Calendar size={12} /> Joined
-              </span>
-              <span
-                className="room-hero-detail-value"
-                style={{ fontSize: 13, fontWeight: 500 }}
-              >
-                {new Date(student.createdAt).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
+              {student.parentEmail && (
+                <div className="detail-row">
+                  <span className="detail-label">Parent Email</span>
+                  <span className="detail-value">{student.parentEmail}</span>
+                </div>
+              )}
+              <div className="detail-row">
+                <span className="detail-label">Joined</span>
+                <span className="detail-value">
+                  {new Date(student.createdAt).toLocaleDateString()}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-        <button
-          className="btn btn-secondary btn-sm"
-          style={{ alignSelf: "flex-start" }}
-          onClick={() => onEdit(student)}
-        >
-          <Pencil size={13} /> Edit
-        </button>
-      </div>
 
-      {/* ── Registrations card — full width ── */}
-      <div className="detail-card">
-        <div className="detail-card-title">
-          <BookOpen size={14} /> Course Registrations
-          <span className="detail-card-count">{registrations.length}</span>
+          {/* CGPA */}
+          <div className="detail-card">
+            <div className="detail-card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Academic Summary</span>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={handleGenerateTranscript}
+                disabled={generating}
+              >
+                {generating ? <Spinner size={12} /> : <FileText size={14} />}
+                {transcript ? "Update Transcript" : "Generate Transcript"}
+              </button>
+            </div>
+            {transcript ? (
+              <div className="detail-rows">
+                <div className="detail-row">
+                  <span className="detail-label">CGPA</span>
+                  <span
+                    className="detail-value"
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 700,
+                      color: "var(--accent-primary)",
+                    }}
+                  >
+                    {transcript.cgpa?.toFixed(2) ?? "—"}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Courses Completed</span>
+                  <span className="detail-value">
+                    {transcript.records?.length ?? 0}
+                  </span>
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setShowTranscriptModal(true)}
+                  >
+                    <FileText size={14} /> View Transcript Document
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p style={{ fontSize: 13, color: "var(--text-tertiary)", padding: "12px 0" }}>
+                No transcript generated yet.
+              </p>
+            )}
+          </div>
         </div>
-        {loading ? (
-          <div className="loading" style={{ padding: 32 }}>
-            <Spinner size={16} /> Loading…
+
+        {/* Registrations */}
+        <div className="detail-card">
+          <div className="detail-card-title">
+            <BookOpen size={15} /> Course Registrations ({registrations.length})
           </div>
-        ) : registrations.length === 0 ? (
-          <div className="detail-empty">
-            <BookOpen size={32} />
-            <p>No course registrations yet</p>
-          </div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Course</th>
-                  <th>Semester</th>
-                  <th>Grade</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {registrations.map((r) => (
-                  <tr key={r._id}>
-                    <td>
-                      <span style={{ fontWeight: 600 }}>
-                        {r.course?.code || "—"}
-                      </span>
-                      {r.course?.title && (
+          {loading ? (
+            <div className="loading" style={{ padding: 24 }}>
+              <Spinner size={16} /> Loading…
+            </div>
+          ) : registrations.length === 0 ? (
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--text-tertiary)",
+                padding: "12px 0",
+              }}
+            >
+              No registrations found.
+            </p>
+          ) : (
+            <div
+              className="table-container"
+              style={{ boxShadow: "none", border: "none" }}
+            >
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Course</th>
+                    <th>Semester</th>
+                    <th>Grade</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {registrations.map((r) => (
+                    <tr key={r._id}>
+                      <td style={{ fontWeight: 600 }}>
+                        {r.course?.code || "—"}{" "}
                         <span
                           style={{
+                            fontWeight: 400,
                             color: "var(--text-secondary)",
-                            marginLeft: 6,
-                            fontSize: 13,
                           }}
                         >
-                          {r.course.title}
+                          {r.course?.title}
                         </span>
-                      )}
-                    </td>
-                    <td style={{ color: "var(--text-secondary)" }}>
-                      {r.semester}
-                    </td>
-                    <td style={{ fontWeight: 600 }}>{r.grade || "—"}</td>
-                    <td>
-                      <Badge
-                        variant={
-                          r.status === "enrolled"
-                            ? "success"
-                            : r.status === "completed"
-                              ? "info"
-                              : "danger"
-                        }
-                      >
-                        {r.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                      </td>
+                      <td style={{ color: "var(--text-secondary)" }}>
+                        {r.semester}
+                      </td>
+                      <td>{r.grade || "—"}</td>
+                      <td>
+                        <Badge
+                          variant={
+                            r.status === "enrolled"
+                              ? "success"
+                              : r.status === "completed"
+                                ? "info"
+                                : "danger"
+                          }
+                        >
+                          {r.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
+
+      {showTranscriptModal && (
+        <div className="modal-backdrop" style={{ display: 'flex', flexDirection: 'column', padding: '40px' }}>
+          <div className="modal-content" style={{ maxWidth: '900px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: 0 }}>
+            <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-secondary)', position: 'sticky', top: 0, zIndex: 10 }}>
+              <h3 style={{ margin: 0 }}>Transcript Preview</h3>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
+                  <Printer size={14} /> Print / Save PDF
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setShowTranscriptModal(false)}>
+                  Close
+                </button>
+              </div>
+            </div>
+            <div id="print-area" style={{ padding: '40px', backgroundColor: '#e5e7eb', minHeight: '800px' }}>
+              <TranscriptDocument transcript={transcript} student={student} />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -614,11 +645,11 @@ function Toast({ message, type = "success", onDone }) {
 function Avatar({ name }) {
   const initials = name
     ? name
-        .split(" ")
-        .slice(0, 2)
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
+      .split(" ")
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
     : "?";
   return <span className="student-avatar">{initials}</span>;
 }
