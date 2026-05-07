@@ -12,5 +12,7 @@ router.post(
 );
 router.get("/inbox", controller.listInbox);
 router.get("/outbox", controller.listOutbox);
+router.get("/chats/all", controller.listAllChats);
+router.get("/conversation", controller.getConversation);
 
 module.exports = router;

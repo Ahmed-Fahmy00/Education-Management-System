@@ -178,6 +178,34 @@
   font-size: 14px;
 }
 
+.chats-load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  margin: 8px 4px;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  width: calc(100% - 8px);
+  color: #3b82f6;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chats-load-more:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: #3b82f6;
+}
+
+.chats-load-more:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .chats-item {
   display: flex;
   align-items: center;

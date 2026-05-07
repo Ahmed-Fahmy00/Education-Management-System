@@ -1,25 +1,35 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Send, Loader2, X } from "lucide-react";
+import { Search, Send, Loader2, X, ChevronDown } from "lucide-react";
+import { io } from "socket.io-client";
 import { UserLayout } from "./Home";
-import { sendMessage, getInbox, getStudents } from "../api/messages";
+import {
+  sendMessage,
+  getAllChats,
+  getConversation,
+  getStudents,
+  getStaff,
+} from "../api/messages";
 import "../styles/chats.css";
 
 export default function Chats() {
   const navigate = useNavigate();
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+  const socketRef = useRef(null);
 
   // State management
   const [selectedChat, setSelectedChat] = useState(null);
-  const [allMessages, setAllMessages] = useState([]);
   const [recentChats, setRecentChats] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
-  const [allStudents, setAllStudents] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [searchInput, setSearchInput] = useState("");
   const [messageInput, setMessageInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [chatsLoading, setChatsLoading] = useState(false);
+  const [hasMoreChats, setHasMoreChats] = useState(true);
+  const [chatPage, setChatPage] = useState(0);
   const messagesEndRef = useRef(null);
 
   const handleLogout = () => {
@@ -28,7 +38,47 @@ export default function Chats() {
     navigate("/login");
   };
 
-  // Fetch all messages and students on mount
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:8000";
+    const socket = io(socketUrl);
+
+    socket.on("connect", () => {
+      console.log("Connected to socket server");
+    });
+
+    socket.on("receive_message", (message) => {
+      console.log("Received message:", message);
+      setSelectedChat((prev) => {
+        if (!prev) return prev;
+        
+        // Check if this message is for the current chat
+        const isForCurrentChat = 
+          (message.senderName === prev.name) || 
+          (message.receiverName === prev.name);
+        
+        if (isForCurrentChat) {
+          // Avoid duplicates if message is from current user
+          const isDuplicate = prev.messages.some(m => m._id === message._id);
+          if (!isDuplicate && message.senderName !== currentUser.name) {
+            return {
+              ...prev,
+              messages: [...prev.messages, message],
+            };
+          }
+        }
+        return prev;
+      });
+    });
+
+    socketRef.current = socket;
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  // Load initial data
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -36,99 +86,110 @@ export default function Chats() {
   const loadInitialData = useCallback(async () => {
     setLoading(true);
     try {
-      const [inboxRes, studentsRes] = await Promise.all([
-        getInbox(),
+      const [chatsRes, studentsRes, staffRes] = await Promise.all([
+        getAllChats(currentUser.name, 10, 0),
         getStudents(),
+        getStaff(),
       ]);
 
-      const messages = Array.isArray(inboxRes) ? inboxRes : [];
-      setAllMessages(messages);
+      const chats = Array.isArray(chatsRes) ? chatsRes : [];
+      setRecentChats(chats);
+      setHasMoreChats(chats.length === 10);
 
-      // Build recent chats from messages
-      const chatsMap = new Map();
-      messages.forEach((msg) => {
-        const otherPerson = msg.senderName;
-        if (!chatsMap.has(otherPerson)) {
-          chatsMap.set(otherPerson, {
-            name: otherPerson,
-            role: msg.senderRole,
-            lastMessage: msg.body,
-            lastMessageTime: msg.createdAt,
-            unread: !msg.readAt,
-          });
-        }
-      });
-      setRecentChats(Array.from(chatsMap.values()));
-
+      // Combine students and staff for search
       const students = Array.isArray(studentsRes) ? studentsRes : [];
-      setAllStudents(students);
+      const staff = Array.isArray(staffRes) ? staffRes : [];
+      const allUsersData = [
+        ...students,
+        ...staff,
+      ].filter((u) => u.name !== currentUser.name);
+      setAllUsers(allUsersData);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUser.name]);
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [selectedChat?.messages]);
+  // Load more chats
+  const loadMoreChats = useCallback(async () => {
+    if (chatsLoading || !hasMoreChats) return;
+
+    setChatsLoading(true);
+    try {
+      const nextPage = chatPage + 1;
+      const skip = nextPage * 10;
+      const moreChats = await getAllChats(currentUser.name, 10, skip);
+
+      const chatsArray = Array.isArray(moreChats) ? moreChats : [];
+      setRecentChats((prev) => [...prev, ...chatsArray]);
+      setHasMoreChats(chatsArray.length === 10);
+      setChatPage(nextPage);
+    } catch (error) {
+      console.error("Error loading more chats:", error);
+    } finally {
+      setChatsLoading(false);
+    }
+  }, [chatPage, currentUser.name, hasMoreChats, chatsLoading]);
 
   // Handle search input
   const handleSearch = useCallback(
     (query) => {
       setSearchInput(query);
-      if (query.trim().length < 2) {
+      console.log("Search query:", query, "All users available:", allUsers.length);
+      if (query.trim().length < 1) {
         setSearchResults([]);
         return;
       }
 
-      const filtered = allStudents.filter(
-        (student) =>
-          student.name &&
-          student.name.toLowerCase().includes(query.toLowerCase()) &&
-          student.name !== currentUser.name // Don't show self
+      const filtered = allUsers.filter(
+        (user) =>
+          user.name &&
+          user.name.toLowerCase().startsWith(query.toLowerCase())
       );
+      console.log("Filtered results:", filtered);
       setSearchResults(filtered);
     },
-    [allStudents, currentUser.name]
+    [allUsers]
   );
 
-  // Start a new chat with a student
-  const startChat = useCallback(
-    (student) => {
-      const chatMessages = allMessages.filter(
-        (msg) =>
-          msg.senderName === student.name || msg.receiverName === student.name
-      );
-
-      setSelectedChat({
-        name: student.name,
-        role: student.role,
-        messages: chatMessages,
-      });
-      setSearchInput("");
-      setSearchResults([]);
+  // Handle search input blur with delay to allow clicks
+  const handleSearchBlur = useCallback(() => {
+    setTimeout(() => {
       setShowSearch(false);
-    },
-    [allMessages]
-  );
+    }, 150);
+  }, []);
 
-  // Click on recent chat
-  const handleRecentChatClick = useCallback(
-    (chat) => {
-      const chatMessages = allMessages.filter(
-        (msg) =>
-          msg.senderName === chat.name || msg.receiverName === chat.name
-      );
+  // Open a chat with a user
+  const openChat = useCallback(
+    async (user) => {
+      try {
+        const conversation = await getConversation(currentUser.name, user.name);
+        const messages = Array.isArray(conversation) ? conversation : [];
 
-      setSelectedChat({
-        name: chat.name,
-        role: chat.role,
-        messages: chatMessages,
-      });
+        setSelectedChat({
+          name: user.name,
+          role: user.role || "student",
+          messages,
+        });
+
+        // Join socket room
+        if (socketRef.current) {
+          socketRef.current.emit("join_chat", {
+            userName: currentUser.name,
+            otherUserName: user.name,
+          });
+        }
+
+        // Clear search
+        setSearchInput("");
+        setSearchResults([]);
+        setShowSearch(false);
+      } catch (error) {
+        console.error("Error loading conversation:", error);
+      }
     },
-    [allMessages]
+    [currentUser.name]
   );
 
   // Send a message
@@ -146,11 +207,19 @@ export default function Chats() {
         subject: `Chat with ${selectedChat.name}`,
       };
 
-      await sendMessage(payload);
+      // Send via socket for real-time delivery and database persistence
+      if (socketRef.current) {
+        socketRef.current.emit("send_message", payload);
+      }
 
-      // Add message to current chat
+      // Add message to local state immediately for optimistic UI update
       const newMessage = {
-        ...payload,
+        senderName: payload.senderName,
+        senderRole: payload.senderRole,
+        receiverName: payload.receiverName,
+        receiverRole: payload.receiverRole,
+        body: payload.body,
+        subject: payload.subject,
         createdAt: new Date().toISOString(),
         readAt: null,
       };
@@ -179,6 +248,24 @@ export default function Chats() {
     }
   };
 
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [selectedChat?.messages]);
+
+  if (loading) {
+    return (
+      <UserLayout user={currentUser} onLogout={handleLogout}>
+        <div className="chats-container">
+          <div className="chats-loading">
+            <Loader2 size={24} className="spinner" />
+            <p>Loading chats...</p>
+          </div>
+        </div>
+      </UserLayout>
+    );
+  }
+
   const chatContent = (
     <div className="chats-container">
       {/* ── Chats Sidebar ── */}
@@ -193,16 +280,25 @@ export default function Chats() {
             <Search size={16} />
             <input
               type="text"
-              placeholder="Search students..."
+              placeholder="Search students/staff..."
               value={searchInput}
               onChange={(e) => handleSearch(e.target.value)}
-              onFocus={() => setShowSearch(true)}
+              onFocus={() => {
+                setShowSearch(true);
+                console.log("Search focused, allUsers:", allUsers.length);
+              }}
+              onBlur={handleSearchBlur}
+              className="chats-search-input"
             />
             {searchInput && (
-              <button onClick={() => {
-                setSearchInput("");
-                setSearchResults([]);
-              }} className="chats-search-clear">
+              <button
+                onClick={() => {
+                  setSearchInput("");
+                  setSearchResults([]);
+                  setShowSearch(false);
+                }}
+                className="chats-search-clear"
+              >
                 <X size={16} />
               </button>
             )}
@@ -211,16 +307,17 @@ export default function Chats() {
           {/* Search results dropdown */}
           {showSearch && searchResults.length > 0 && (
             <div className="chats-search-results">
-              {searchResults.map((student) => (
+              {searchResults.map((user) => (
                 <button
-                  key={student._id}
+                  key={user._id}
                   className="chats-search-result-item"
-                  onClick={() => startChat(student)}
+                  onClick={() => openChat(user)}
+                  onMouseDown={(e) => e.preventDefault()}
                 >
-                  <div className="chats-avatar">{student.name[0]}</div>
+                  <div className="chats-avatar">{user.name[0]}</div>
                   <div className="chats-result-info">
-                    <div className="chats-result-name">{student.name}</div>
-                    <div className="chats-result-role">{student.role}</div>
+                    <div className="chats-result-name">{user.name}</div>
+                    <div className="chats-result-role">{user.role || "student"}</div>
                   </div>
                 </button>
               ))}
@@ -233,23 +330,46 @@ export default function Chats() {
           {recentChats.length === 0 ? (
             <div className="chats-empty">No chats yet</div>
           ) : (
-            recentChats.map((chat) => (
-              <button
-                key={chat.name}
-                className={`chats-item ${selectedChat?.name === chat.name ? "active" : ""}`}
-                onClick={() => handleRecentChatClick(chat)}
-              >
-                <div className="chats-avatar">{chat.name[0]}</div>
-                <div className="chats-item-content">
-                  <div className="chats-item-name">{chat.name}</div>
-                  <div className="chats-item-preview">
-                    {chat.lastMessage.substring(0, 40)}
-                    {chat.lastMessage.length > 40 ? "..." : ""}
+            <>
+              {recentChats.map((chat) => (
+                <button
+                  key={chat.name}
+                  className={`chats-item ${
+                    selectedChat?.name === chat.name ? "active" : ""
+                  }`}
+                  onClick={() => openChat(chat)}
+                >
+                  <div className="chats-avatar">{chat.name[0]}</div>
+                  <div className="chats-item-content">
+                    <div className="chats-item-name">{chat.name}</div>
+                    <div className="chats-item-preview">
+                      {chat.lastMessage.substring(0, 40)}
+                      {chat.lastMessage.length > 40 ? "..." : ""}
+                    </div>
                   </div>
-                </div>
-                {chat.unread && <div className="chats-unread-badge" />}
-              </button>
-            ))
+                </button>
+              ))}
+
+              {hasMoreChats && (
+                <button
+                  className="chats-load-more"
+                  onClick={loadMoreChats}
+                  disabled={chatsLoading}
+                >
+                  {chatsLoading ? (
+                    <>
+                      <Loader2 size={14} className="spinner" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown size={14} />
+                      Load more chats
+                    </>
+                  )}
+                </button>
+              )}
+            </>
           )}
         </div>
       </aside>
@@ -265,7 +385,10 @@ export default function Chats() {
               className="chats-empty-icon"
             />
             <h3>No chat selected</h3>
-            <p>Start a conversation by selecting a recent chat or searching for a student</p>
+            <p>
+              Start a conversation by selecting a recent chat or searching for
+              someone
+            </p>
           </div>
         ) : (
           // Chat view
@@ -285,7 +408,7 @@ export default function Chats() {
             <div className="chats-messages">
               {selectedChat.messages.length === 0 ? (
                 <div className="chats-no-messages">
-                  <p>No messages yet. Start the conversation!</p>
+                  <p>No messages yet. Messaging coming soon!</p>
                 </div>
               ) : (
                 selectedChat.messages.map((msg, idx) => (
@@ -295,9 +418,7 @@ export default function Chats() {
                       msg.senderName === currentUser.name ? "sent" : "received"
                     }`}
                   >
-                    <div className="chats-message-bubble">
-                      {msg.body}
-                    </div>
+                    <div className="chats-message-bubble">{msg.body}</div>
                     <div className="chats-message-time">
                       {new Date(msg.createdAt).toLocaleTimeString([], {
                         hour: "2-digit",
@@ -344,19 +465,6 @@ export default function Chats() {
       </div>
     </div>
   );
-
-  if (loading) {
-    return (
-      <UserLayout user={currentUser} onLogout={handleLogout}>
-        <div className="chats-container">
-          <div className="chats-loading">
-            <Loader2 size={24} className="spinner" />
-            <p>Loading chats...</p>
-          </div>
-        </div>
-      </UserLayout>
-    );
-  }
 
   return (
     <UserLayout user={currentUser} onLogout={handleLogout}>
