@@ -36,4 +36,15 @@ async function getTranscript(req, res, next) {
   }
 }
 
-module.exports = { upsertTranscript, getTranscript };
+async function generateTranscript(req, res, next) {
+  try {
+    const transcript = await transcriptsService.generateTranscript(
+      req.params.studentId,
+    );
+    res.json(transcript);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { upsertTranscript, getTranscript, generateTranscript };
