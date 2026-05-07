@@ -9,6 +9,7 @@ import {
   Layers3,
 } from "lucide-react";
 import { getStudentCourseRequirements } from "../api/courses";
+import { registerStudentEnrollment } from "../api/registrations";
 import { UserLayout } from "./Home";
 import "../styles/course-requirements.css";
 
@@ -30,6 +31,7 @@ export default function CourseRequirements() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [enrolling, setEnrolling] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -72,6 +74,31 @@ export default function CourseRequirements() {
       setLoading(false);
     }
   };
+
+  function getCurrentSemester() {
+    // Simple semester id: YYYY-TERM
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const term = month >= 7 ? 'FALL' : month >= 1 && month <= 5 ? 'SPRING' : 'SUMMER'
+    return `${year}-${term}`
+  }
+
+  const handleEnroll = async (courseId) => {
+    if (!user?.id) return setError('No user available');
+    const semester = getCurrentSemester();
+    setEnrolling(courseId);
+    setError("");
+    try {
+      await registerStudentEnrollment({ student: user.id, course: courseId, semester });
+      // refresh requirements or show success
+      await handleRefresh();
+    } catch (e) {
+      setError(e?.message || 'Unable to enroll');
+    } finally {
+      setEnrolling(null);
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -157,7 +184,13 @@ export default function CourseRequirements() {
                       <strong>{c.code}</strong>
                       <span>{c.title}</span>
                     </div>
-                    <CheckCircle2 size={16} />
+                    <button
+                      className="cr-enroll-btn"
+                      onClick={() => handleEnroll(c._id)}
+                      disabled={enrolling && enrolling !== c._id}
+                    >
+                      {enrolling === c._id ? 'Enrolling…' : 'Enroll'}
+                    </button>
                   </li>
                 ))
               )}
@@ -189,7 +222,13 @@ export default function CourseRequirements() {
                       <strong>{c.code}</strong>
                       <span>{c.title}</span>
                     </div>
-                    <ChevronRight size={16} />
+                    <button
+                      className="cr-enroll-btn"
+                      onClick={() => handleEnroll(c._id)}
+                      disabled={enrolling && enrolling !== c._id}
+                    >
+                      {enrolling === c._id ? 'Enrolling…' : 'Enroll'}
+                    </button>
                   </li>
                 ))
               )}
