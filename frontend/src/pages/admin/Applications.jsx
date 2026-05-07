@@ -6,6 +6,7 @@ import {
   XCircle,
   AlertCircle,
   UserCheck,
+  X,
 } from "lucide-react";
 import { apiFetch, Badge, Spinner, EmptyState } from "./shared";
 
@@ -73,11 +74,16 @@ export default function Applications({ adminId, onCountChange }) {
     }
   };
 
-  const filtered = items.filter(
-    (a) =>
-      a.name.toLowerCase().includes(search.toLowerCase()) ||
-      a.email.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = items.filter((a) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      (a.name || "").toLowerCase().includes(q) ||
+      (a.email || "").toLowerCase().includes(q) ||
+      (a.role || "").toLowerCase().includes(q) ||
+      (a.department || "").toLowerCase().includes(q)
+    );
+  });
 
   return (
     <>
@@ -99,11 +105,38 @@ export default function Applications({ adminId, onCountChange }) {
         <div className="search-input-wrap">
           <Search size={15} />
           <input
-            placeholder="Search by name or email…"
+            placeholder="Search by name, email, role, or department…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          {search && (
+            <button
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--text-tertiary)",
+                display: "flex",
+                padding: 0,
+              }}
+              onClick={() => setSearch("")}
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
+        {!loading && (
+          <span
+            style={{
+              fontSize: 13,
+              color: "var(--text-tertiary)",
+              marginLeft: "auto",
+            }}
+          >
+            {filtered.length} of {items.length} application
+            {items.length !== 1 ? "s" : ""}
+          </span>
+        )}
       </div>
 
       {error && (
@@ -132,6 +165,7 @@ export default function Applications({ adminId, onCountChange }) {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Role</th>
+                  <th>Department</th>
                   <th>Submitted</th>
                   <th>Actions</th>
                 </tr>
@@ -147,6 +181,11 @@ export default function Applications({ adminId, onCountChange }) {
                       <Badge variant={a.role === "student" ? "info" : "purple"}>
                         {a.role}
                       </Badge>
+                    </td>
+                    <td
+                      style={{ color: "var(--text-secondary)", fontSize: 13 }}
+                    >
+                      {a.department || "—"}
                     </td>
                     <td style={{ color: "var(--text-secondary)" }}>
                       {new Date(a.createdAt).toLocaleDateString()}

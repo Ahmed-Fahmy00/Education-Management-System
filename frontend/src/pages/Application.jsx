@@ -11,16 +11,24 @@ export default function Application() {
     password: "",
     confirmPassword: "",
     role: "student",
+    department: "",
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      // Clear department when switching to instructor
+      ...(name === "role" && value === "instructor" ? { department: "" } : {}),
+    }));
   };
 
   const validate = () => {
     if (!formData.name.trim()) return "Please enter your full name";
     if (!formData.email.trim()) return "Please enter your email";
-    if (!formData.email.includes("@")) return "Please enter a valid email";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email.trim()))
+      return "Please enter a valid email address (e.g. name@domain.com)";
     if (formData.password.length < 6)
       return "Password must be at least 6 characters";
     if (formData.password !== formData.confirmPassword)
@@ -45,6 +53,7 @@ export default function Application() {
           email: formData.email,
           password: formData.password,
           role: formData.role,
+          department: formData.department,
         }),
       });
 
@@ -159,6 +168,42 @@ export default function Application() {
                   <option value="instructor">Instructor</option>
                 </select>
               </div>
+
+              {formData.role === "student" && (
+                <div className="form-group">
+                  <label htmlFor="department">Department</label>
+                  <select
+                    id="department"
+                    name="department"
+                    value={formData.department}
+                    onChange={handleChange}
+                    className="input select-input"
+                  >
+                    <option value="">Select department…</option>
+                    <option value="Engineering Physics and Mathematics">
+                      Engineering Physics and Mathematics
+                    </option>
+                    <option value="Computer and Systems Engineering">
+                      Computer and Systems Engineering
+                    </option>
+                    <option value="Design and Production Engineering">
+                      Design and Production Engineering
+                    </option>
+                    <option value="Mechanical Power Engineering">
+                      Mechanical Power Engineering
+                    </option>
+                    <option value="Automotive Engineering">
+                      Automotive Engineering
+                    </option>
+                    <option value="Mechatronics Engineering">
+                      Mechatronics Engineering
+                    </option>
+                    <option value="Architectural Engineering">
+                      Architectural Engineering
+                    </option>
+                  </select>
+                </div>
+              )}
 
               <button
                 type="submit"
