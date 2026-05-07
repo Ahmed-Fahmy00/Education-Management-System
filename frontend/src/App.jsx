@@ -8,6 +8,7 @@ import Announcements from "./pages/Announcements";
 import CourseRequirements from "./pages/CourseRequirements";
 import Rooms from "./pages/Rooms";
 import Chats from "./pages/Chats";
+import Forum from "./pages/Forum";
 import "./App.css";
 
 function getStoredUser() {
@@ -110,6 +111,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["student", "instructor"]}>
               <Chats />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/forums"
+          element={
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <Forum />
             </ProtectedRoute>
           }
         />

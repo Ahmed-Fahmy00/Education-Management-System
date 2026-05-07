@@ -157,6 +157,15 @@ export function UserLayout({ children, user, onLogout }) {
             <MessageSquare size={20} />
             <span>Chats</span>
           </button>
+
+          {/* Forums */}
+          <button
+            className={`hs-nav-item ${isActive("/forums") ? "active" : ""}`}
+            onClick={() => navTo("/forums")}
+          >
+            <MessageSquare size={20} />
+            <span>Forums</span>
+          </button>
         </nav>
 
         {/* Sidebar footer — empty, no logout */}
@@ -321,7 +330,12 @@ export default function Home() {
           ) : (
             <div className="hs-posts-list">
               {posts.map((p) => (
-                <div key={p._id} className="hs-post-card">
+                <div 
+                  key={p._id} 
+                  className="hs-post-card"
+                  onClick={() => navigate("/forums")}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="hs-post-header">
                     <div className="hs-post-author-avatar">
                       {p.authorName?.charAt(0).toUpperCase() || "?"}
