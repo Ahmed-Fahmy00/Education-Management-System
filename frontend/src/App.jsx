@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Application from "./pages/Application";
 import Home from "./pages/Home";
-import Admin from "./pages/Admin";
+import Admin from "./pages/admin/Admin";
 import Profile from "./pages/Profile";
 import Announcements from "./pages/Announcements";
 import CourseRequirements from "./pages/CourseRequirements";
@@ -113,7 +113,7 @@ export default function App() {
           }
         />
         <Route
-          path="/admin"
+          path="/admin/*"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <Admin />

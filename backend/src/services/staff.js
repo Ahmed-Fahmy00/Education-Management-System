@@ -1,11 +1,31 @@
 const StaffProfile = require("../models/StaffProfile");
+const Staff = require("../models/Staff");
 
-function createProfile(payload) {
+async function createProfile(payload) {
   return StaffProfile.create(payload);
 }
 
-function listProfiles(query = {}) {
-  return StaffProfile.find(query).sort({ fullName: 1 });
+async function listProfiles(query = {}) {
+  // Get StaffProfile records (existing profiles)
+  const staffProfiles = await StaffProfile.find(query).sort({ fullName: 1 });
+
+  // Get approved Staff records (from registration approvals)
+  const approvedStaff = await Staff.find(query).sort({ name: 1 });
+
+  // Combine both lists
+  const combined = [
+    ...staffProfiles.map((p) => ({
+      ...p.toObject(),
+      _type: "profile",
+    })),
+    ...approvedStaff.map((s) => ({
+      ...s.toObject(),
+      _type: "staff",
+      fullName: s.name, // For UI consistency
+    })),
+  ];
+
+  return combined;
 }
 
 function updateProfile(id, payload) {
