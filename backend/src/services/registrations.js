@@ -42,6 +42,12 @@ function listRegistrations(query = {}) {
     .populate("course", "code title type department");
 }
 
+function getStudentsInCourse(courseId) {
+  return CourseRegistration.find({ course: courseId, status: "enrolled" })
+    .populate("student", "studentId firstName lastName email department")
+    .populate("course", "code title");
+}
+
 function updateRegistration(id, payload) {
   return CourseRegistration.findByIdAndUpdate(id, payload, {
     new: true,
@@ -49,4 +55,4 @@ function updateRegistration(id, payload) {
   });
 }
 
-module.exports = { registerStudent, listRegistrations, updateRegistration };
+module.exports = { registerStudent, listRegistrations, getStudentsInCourse, updateRegistration };

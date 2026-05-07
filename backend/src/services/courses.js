@@ -9,7 +9,11 @@ function listCourses(query = {}) {
 }
 
 function getCourseById(id) {
-  return Course.findById(id).populate("prerequisites", "code title");
+  return Course.findById(id).populate("prerequisites", "code title").populate("instructorId", "name email");
+}
+
+function getCoursesByInstructorId(instructorId) {
+  return Course.find({ instructorId }).populate("prerequisites", "code title").populate("instructorId", "name email");
 }
 
 function updateCourse(id, payload) {
@@ -27,6 +31,7 @@ module.exports = {
   createCourse,
   listCourses,
   getCourseById,
+  getCoursesByInstructorId,
   updateCourse,
   deleteCourse,
 };

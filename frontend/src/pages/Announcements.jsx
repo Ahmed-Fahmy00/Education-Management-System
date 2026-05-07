@@ -111,7 +111,7 @@ export default function Announcements() {
                     <span className="ann-page-course">
                       {a.course?.code ?? "General"}
                     </span>
-                    <span className="ann-page-by">by {a.postedBy}</span>
+                    <span className="ann-page-by">Professor {a.instructor?.name || "Unknown"}</span>
                   </div>
                 </div>
               </div>

@@ -11,3 +11,7 @@ export function listRegistrations(query = '') {
   const path = query ? `/api/registrations?${query}` : '/api/registrations'
   return apiFetch(path)
 }
+
+export function getStudentsInCourse(courseId) {
+  return apiFetch(`/api/registrations/course/${courseId}/students`)
+}

@@ -20,6 +20,7 @@ import {
   Loader2,
   CalendarDays,
 } from "lucide-react";
+import InstructorHome from "./InstructorHome";
 import "../styles/home.css";
 
 /* ── helpers ──────────────────────────────────────────────────────────────── */
@@ -313,6 +314,14 @@ export default function Home() {
 
   if (!user) return <div className="home-loading">No user data</div>;
 
+  // Show instructor home for instructor users
+  if (user.role === "instructor") {
+    return (
+      <UserLayout user={user} onLogout={handleLogout}>
+        <InstructorHome user={user} />
+      </UserLayout>
+    );
+  }
   return (
     <UserLayout user={user} onLogout={handleLogout}>
       <div className="hs-home-grid">
