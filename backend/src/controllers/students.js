@@ -1,4 +1,5 @@
 const studentsService = require("../services/students");
+const { generateStudentId } = require("../utils/idGenerator");
 
 async function listStudents(req, res, next) {
   try {
@@ -6,10 +7,13 @@ async function listStudents(req, res, next) {
     const query = q
       ? {
           $or: [
+            { name: { $regex: q, $options: "i" } },
             { firstName: { $regex: q, $options: "i" } },
             { lastName: { $regex: q, $options: "i" } },
             { studentId: { $regex: q, $options: "i" } },
             { email: { $regex: q, $options: "i" } },
+            { department: { $regex: q, $options: "i" } },
+            { parentEmail: { $regex: q, $options: "i" } },
           ],
         }
       : {};
@@ -22,7 +26,12 @@ async function listStudents(req, res, next) {
 
 async function createStudent(req, res, next) {
   try {
-    const created = await studentsService.createStudent(req.body);
+    // Always auto-generate the studentId — never trust the client value
+    const studentId = await generateStudentId();
+    const created = await studentsService.createStudent({
+      ...req.body,
+      studentId,
+    });
     res.status(201).json(created);
   } catch (err) {
     next(err);

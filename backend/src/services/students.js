@@ -1,11 +1,13 @@
 const Student = require("../models/Student");
 
+const studentProjection = "-password";
+
 function listStudents(query = {}) {
-  return Student.find(query).sort({ createdAt: -1 });
+  return Student.find(query).select(studentProjection).sort({ createdAt: -1 });
 }
 
 function getStudentById(id) {
-  return Student.findById(id);
+  return Student.findById(id).select(studentProjection);
 }
 
 function createStudent(payload) {
@@ -16,7 +18,7 @@ function updateStudent(id, payload) {
   return Student.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,
-  });
+  }).select(studentProjection);
 }
 
 function deleteStudent(id) {
