@@ -20,6 +20,7 @@ const staffSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "RegistrationApplication",
     },
+    staffId: { type: String, trim: true, sparse: true },
     department: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
   },

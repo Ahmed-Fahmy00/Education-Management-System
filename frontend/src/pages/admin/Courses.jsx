@@ -12,6 +12,7 @@ import {
   Users,
   BarChart2,
   ArrowLeft,
+  Search,
 } from "lucide-react";
 import { apiFetch, Badge, Spinner, EmptyState } from "./shared";
 
@@ -708,7 +709,7 @@ function DeleteConfirm({ course, onClose, onDeleted }) {
 }
 
 /* ── Course Detail Panel ──────────────────────────────────────────────────── */
-function CourseDetail({ course, onBack, onEdit, onDelete, staffList }) {
+function CourseDetail({ course, onBack, onEdit, onDelete }) {
   const [registrations, setRegistrations] = useState([]);
   const [loadingReg, setLoadingReg] = useState(true);
 
@@ -728,46 +729,17 @@ function CourseDetail({ course, onBack, onEdit, onDelete, staffList }) {
     load();
   }, [course._id]);
 
-  // Grade distribution from registrations that have a grade
-  const graded = registrations.filter((r) => r.grade);
-  const gradeCounts = graded.reduce((acc, r) => {
-    acc[r.grade] = (acc[r.grade] || 0) + 1;
-    return acc;
-  }, {});
-  const gradeEntries = Object.entries(gradeCounts).sort((a, b) => b[1] - a[1]);
-  const maxCount = gradeEntries.length
-    ? Math.max(...gradeEntries.map((e) => e[1]))
-    : 1;
+  const enrolledCount = registrations.filter(
+    (r) => r.status === "enrolled",
+  ).length;
 
   return (
     <>
-      {/* Header */}
+      {/* ── Back + actions bar ── */}
       <div className="page-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button className="btn btn-secondary btn-sm" onClick={onBack}>
-            <ArrowLeft size={14} /> Back
-          </button>
-          <div>
-            <h2 style={{ marginBottom: 2 }}>
-              <code
-                style={{
-                  background: "var(--bg-tertiary)",
-                  padding: "2px 10px",
-                  borderRadius: 6,
-                  fontSize: 18,
-                  marginRight: 10,
-                }}
-              >
-                {course.code}
-              </code>
-              {course.title}
-            </h2>
-            <p>
-              {course.department} · {course.credits} credit hour
-              {course.credits !== 1 ? "s" : ""}
-            </p>
-          </div>
-        </div>
+        <button className="btn btn-secondary btn-sm" onClick={onBack}>
+          <ArrowLeft size={14} /> Back
+        </button>
         <div style={{ display: "flex", gap: 8 }}>
           <button
             className="btn btn-secondary btn-sm"
@@ -784,209 +756,157 @@ function CourseDetail({ course, onBack, onEdit, onDelete, staffList }) {
         </div>
       </div>
 
-      <div className="detail-grid-layout">
-        {/* Left column */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {/* Info card */}
-          <div className="detail-card">
-            <div className="detail-card-title">Course Information</div>
-            <div className="detail-rows">
-              <div className="detail-row">
-                <span className="detail-label">Code</span>
-                <span className="detail-value">
-                  <code
-                    style={{
-                      background: "var(--bg-tertiary)",
-                      padding: "2px 8px",
-                      borderRadius: 4,
-                      fontSize: 13,
-                    }}
-                  >
-                    {course.code}
-                  </code>
-                </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Title</span>
-                <span className="detail-value">{course.title}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Department</span>
-                <span className="detail-value">{course.department}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Instructor</span>
-                <span className="detail-value">
-                  {course.instructorName || "—"}
-                </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Type</span>
-                <span className="detail-value">
-                  <Badge variant={course.type === "core" ? "info" : "warning"}>
-                    {course.type}
-                  </Badge>
-                </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Credits</span>
-                <span className="detail-value">{course.credits}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Capacity</span>
-                <span className="detail-value">{course.capacity}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Enrolled</span>
-                <span className="detail-value">
-                  {registrations.filter((r) => r.status === "enrolled").length}{" "}
-                  / {course.capacity}
-                </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Status</span>
-                <span className="detail-value">
-                  <Badge variant={course.isActive ? "success" : "danger"}>
-                    {course.isActive ? "Active" : "Inactive"}
-                  </Badge>
-                </span>
-              </div>
-              {course.description && (
-                <div className="detail-row detail-row-full">
-                  <span className="detail-label">Description</span>
-                  <span
-                    className="detail-value"
-                    style={{ whiteSpace: "pre-wrap" }}
-                  >
-                    {course.description}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Grade distribution */}
-          <div className="detail-card">
-            <div className="detail-card-title">
-              <BarChart2 size={15} /> Grade Distribution
-            </div>
-            {loadingReg ? (
-              <div className="loading" style={{ padding: 24 }}>
-                <Spinner size={16} /> Loading…
-              </div>
-            ) : gradeEntries.length === 0 ? (
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "var(--text-tertiary)",
-                  padding: "12px 0",
-                }}
-              >
-                No graded registrations yet.
-              </p>
-            ) : (
-              <div className="grade-chart">
-                {gradeEntries.map(([grade, count]) => (
-                  <div key={grade} className="grade-bar-row">
-                    <span
-                      className="grade-label"
-                      style={{
-                        color: GRADE_COLORS[grade] || "var(--text-secondary)",
-                      }}
-                    >
-                      {grade}
-                    </span>
-                    <div className="grade-bar-track">
-                      <div
-                        className="grade-bar-fill"
-                        style={{
-                          width: `${(count / maxCount) * 100}%`,
-                          background:
-                            GRADE_COLORS[grade] || "var(--accent-primary)",
-                        }}
-                      />
-                    </div>
-                    <span className="grade-count">{count}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      {/* ── Hero card ── */}
+      <div className="detail-hero-card" style={{ marginBottom: 20 }}>
+        <div
+          className="detail-hero-avatar"
+          style={{
+            background:
+              "linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-purple) 100%)",
+            borderRadius: 14,
+            fontSize: 15,
+            fontFamily: "monospace",
+            fontWeight: 800,
+            width: 72,
+            height: 72,
+            flexShrink: 0,
+          }}
+        >
+          {course.code.split("-")[0]}
         </div>
-
-        {/* Right column — enrolled students */}
-        <div className="detail-card">
-          <div className="detail-card-title">
-            <Users size={15} /> Enrolled Students (
-            {registrations.filter((r) => r.status === "enrolled").length})
-          </div>
-          {loadingReg ? (
-            <div className="loading" style={{ padding: 24 }}>
-              <Spinner size={16} /> Loading…
-            </div>
-          ) : registrations.filter((r) => r.status === "enrolled").length ===
-            0 ? (
-            <p
+        <div className="detail-hero-info" style={{ flex: 1 }}>
+          {/* Code + status badges */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
+              marginBottom: 6,
+            }}
+          >
+            <code
               style={{
+                background: "var(--bg-tertiary)",
+                border: "1px solid var(--border-color)",
+                padding: "3px 10px",
+                borderRadius: 6,
                 fontSize: 13,
-                color: "var(--text-tertiary)",
-                padding: "12px 0",
+                fontWeight: 700,
+                color: "var(--text-primary)",
               }}
             >
-              No students enrolled.
-            </p>
-          ) : (
-            <div
-              className="table-container"
-              style={{ boxShadow: "none", border: "none" }}
+              {course.code}
+            </code>
+            <Badge variant={course.isActive ? "success" : "danger"}>
+              {course.isActive ? "Active" : "Inactive"}
+            </Badge>
+          </div>
+
+          {/* Title */}
+          <div className="detail-hero-name">{course.title}</div>
+
+          {/* Department */}
+          <div className="detail-hero-sub">{course.department}</div>
+
+          {/* Key chips */}
+          <div className="detail-hero-meta">
+            <Badge variant={course.type === "core" ? "info" : "warning"}>
+              {course.type}
+            </Badge>
+            <span className="detail-hero-chip">
+              <BookOpen size={12} /> {course.credits} credit
+              {course.credits !== 1 ? "s" : ""}
+            </span>
+            {course.instructorName && (
+              <span className="detail-hero-chip">
+                <Users size={12} /> {course.instructorName}
+              </span>
+            )}
+            <span className="detail-hero-chip">
+              <Users size={12} /> {enrolledCount} / {course.capacity} enrolled
+            </span>
+          </div>
+
+          {/* Description at the bottom of hero */}
+          {course.description && (
+            <p
+              style={{
+                marginTop: 14,
+                fontSize: 14,
+                color: "var(--text-secondary)",
+                lineHeight: 1.6,
+                borderTop: "1px solid var(--border-color)",
+                paddingTop: 12,
+              }}
             >
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Student</th>
-                    <th>Semester</th>
-                    <th>Grade</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {registrations
-                    .filter((r) => r.status === "enrolled")
-                    .map((r) => (
-                      <tr key={r._id}>
-                        <td style={{ fontWeight: 600 }}>
-                          {r.student?.firstName ||
-                            r.student?.name ||
-                            r.student?.studentId ||
-                            "—"}
-                        </td>
-                        <td style={{ color: "var(--text-secondary)" }}>
-                          {r.semester}
-                        </td>
-                        <td>
-                          {r.grade ? (
-                            <span
-                              style={{
-                                fontWeight: 600,
-                                color: GRADE_COLORS[r.grade] || "inherit",
-                              }}
-                            >
-                              {r.grade}
-                            </span>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                        <td>
-                          <Badge variant="success">{r.status}</Badge>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
+              {course.description}
+            </p>
           )}
         </div>
+      </div>
+
+      {/* ── Enrolled students — full width ── */}
+      <div className="detail-card">
+        <div className="detail-card-title">
+          <Users size={14} /> Enrolled Students
+          <span className="detail-card-count">{enrolledCount}</span>
+        </div>
+        {loadingReg ? (
+          <div className="loading" style={{ padding: 32 }}>
+            <Spinner size={16} /> Loading…
+          </div>
+        ) : enrolledCount === 0 ? (
+          <div className="detail-empty">
+            <Users size={32} />
+            <p>No students enrolled yet</p>
+          </div>
+        ) : (
+          <div className="table-responsive">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Semester</th>
+                  <th>Grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {registrations
+                  .filter((r) => r.status === "enrolled")
+                  .map((r) => (
+                    <tr key={r._id}>
+                      <td style={{ fontWeight: 600 }}>
+                        {r.student?.name ||
+                          r.student?.firstName ||
+                          r.student?.studentId ||
+                          "—"}
+                      </td>
+                      <td style={{ color: "var(--text-secondary)" }}>
+                        {r.semester}
+                      </td>
+                      <td>
+                        {r.grade ? (
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              color: GRADE_COLORS[r.grade] || "inherit",
+                            }}
+                          >
+                            {r.grade}
+                          </span>
+                        ) : (
+                          <span style={{ color: "var(--text-tertiary)" }}>
+                            —
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </>
   );
@@ -999,6 +919,7 @@ export default function Courses() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -1027,8 +948,21 @@ export default function Courses() {
     load();
   }, [load]);
 
-  const filtered =
+  const byType =
     filter === "all" ? items : items.filter((c) => c.type === filter);
+  const filtered = byType.filter((c) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    const statusText = c.isActive ? "active" : "inactive";
+    return (
+      (c.code || "").toLowerCase().includes(q) ||
+      (c.title || "").toLowerCase().includes(q) ||
+      (c.department || "").toLowerCase().includes(q) ||
+      (c.instructorName || "").toLowerCase().includes(q) ||
+      (c.type || "").toLowerCase().includes(q) ||
+      statusText.includes(q)
+    );
+  });
 
   // If viewing detail, show detail panel
   if (detailTarget) {
@@ -1121,6 +1055,29 @@ export default function Courses() {
       </div>
 
       <div className="filter-bar">
+        <div className="search-input-wrap">
+          <Search size={15} />
+          <input
+            placeholder="Search by code, title, department, or instructor…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {search && (
+            <button
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--text-tertiary)",
+                display: "flex",
+                padding: 0,
+              }}
+              onClick={() => setSearch("")}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
         <div className="filter-tabs">
           {["all", "core", "elective"].map((t) => (
             <button

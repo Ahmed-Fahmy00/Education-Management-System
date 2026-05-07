@@ -1,5 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
-import { RefreshCw, AlertCircle, Wrench, CheckCircle2 } from "lucide-react";
+import {
+  RefreshCw,
+  AlertCircle,
+  Wrench,
+  CheckCircle2,
+  Search,
+  X,
+} from "lucide-react";
 import { apiFetch, Badge, Spinner, EmptyState } from "./shared";
 
 const PRIORITY_VARIANT = {
@@ -19,6 +26,7 @@ export default function Maintenance() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [actionId, setActionId] = useState(null);
 
   const load = useCallback(async () => {
@@ -62,6 +70,17 @@ export default function Maintenance() {
     }
   };
 
+  const filtered = items.filter((r) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      (r.issueDescription || "").toLowerCase().includes(q) ||
+      (r.reportedBy || "").toLowerCase().includes(q) ||
+      (r.priority || "").toLowerCase().includes(q) ||
+      (r.status || "").toLowerCase().includes(q)
+    );
+  });
+
   return (
     <>
       <div className="page-header">
@@ -79,6 +98,29 @@ export default function Maintenance() {
       </div>
 
       <div className="filter-bar">
+        <div className="search-input-wrap">
+          <Search size={15} />
+          <input
+            placeholder="Search by issue description or reported by…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {search && (
+            <button
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--text-tertiary)",
+                display: "flex",
+                padding: 0,
+              }}
+              onClick={() => setSearch("")}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
         <div className="filter-tabs">
           {["all", "open", "in-progress", "resolved"].map((t) => (
             <button
@@ -104,8 +146,18 @@ export default function Maintenance() {
           <div className="loading">
             <Spinner /> Loading reports…
           </div>
-        ) : items.length === 0 ? (
-          <EmptyState icon={Wrench} title="No maintenance reports" />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={Wrench}
+            title={
+              search ? "No reports match your search" : "No maintenance reports"
+            }
+            desc={
+              search
+                ? "Try a different issue description, reporter, priority, or status."
+                : ""
+            }
+          />
         ) : (
           <div className="table-responsive">
             <table className="table">
@@ -119,7 +171,7 @@ export default function Maintenance() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((r) => (
+                {filtered.map((r) => (
                   <tr key={r._id}>
                     <td style={{ fontWeight: 600, maxWidth: 280 }}>
                       {r.issueDescription}

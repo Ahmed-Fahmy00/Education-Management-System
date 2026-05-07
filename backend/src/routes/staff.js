@@ -12,5 +12,6 @@ router.patch(
   requireRole(["admin", "employee"]),
   controller.updateProfile,
 );
+router.delete("/:id", requireRole(["admin"]), controller.deleteProfile);
 
 module.exports = router;

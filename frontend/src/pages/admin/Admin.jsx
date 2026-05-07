@@ -11,7 +11,8 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronRight,
+  ChevronDown,
+  CalendarDays,
 } from "lucide-react";
 
 import Overview from "./Overview";
@@ -26,27 +27,22 @@ import { apiFetch } from "./shared";
 import "../../styles/admin.css";
 
 /* ── Nav config ───────────────────────────────────────────────────────────── */
-const NAV = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "applications", label: "Applications", icon: UserCheck, badge: true },
-  { id: "students", label: "Students", icon: GraduationCap },
-  { id: "staff", label: "Staff", icon: Users },
-  { id: "courses", label: "Courses", icon: BookOpen },
-  { id: "rooms", label: "Rooms", icon: DoorOpen },
-  { id: "maintenance", label: "Maintenance", icon: Wrench },
-];
+const COURSE_SECTIONS = ["courses", "sessions"];
 
 /* ── Main component ───────────────────────────────────────────────────────── */
 export default function Admin() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Extract section from URL path: /admin/courses -> 'courses'
   const pathParts = location.pathname.split("/").filter(Boolean);
   const section = pathParts[1] || "overview";
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [coursesOpen, setCoursesOpen] = useState(() =>
+    COURSE_SECTIONS.includes(section),
+  );
   const [pendingCount, setPendingCount] = useState(null);
+  const [pageSubtitle, setPageSubtitle] = useState("");
   const [overviewStats, setOverviewStats] = useState({
     pending: null,
     students: null,
@@ -63,12 +59,16 @@ export default function Admin() {
     }
   }, []);
 
-  // Redirect /admin to /admin/overview
   useEffect(() => {
     if (location.pathname === "/admin" || location.pathname === "/admin/") {
       navigate("/admin/overview", { replace: true });
     }
   }, [location.pathname, navigate]);
+
+  // Keep courses sub-nav open when on a courses sub-section
+  useEffect(() => {
+    if (COURSE_SECTIONS.includes(section)) setCoursesOpen(true);
+  }, [section]);
 
   useEffect(() => {
     async function loadStats() {
@@ -116,8 +116,20 @@ export default function Admin() {
   const navTo = (id) => {
     navigate(`/admin/${id}`, { replace: false });
     setSidebarOpen(false);
+    setPageSubtitle("");
   };
-  const sectionLabel = NAV.find((n) => n.id === section)?.label ?? "";
+
+  const topbarLabel =
+    {
+      overview: "Overview",
+      applications: "Applications",
+      students: "Students",
+      staff: "Staff",
+      courses: "Courses",
+      sessions: "Open Courses",
+      rooms: "Rooms",
+      maintenance: "Maintenance",
+    }[section] ?? "";
 
   return (
     <div className="admin-app">
@@ -128,7 +140,7 @@ export default function Admin() {
         />
       )}
 
-      {/* Sidebar */}
+      {/* ── Sidebar ── */}
       <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="sidebar-header">
           <h1>EMS Admin</h1>
@@ -141,35 +153,115 @@ export default function Admin() {
         </div>
 
         <nav className="sidebar-nav">
-          {NAV.map(({ id, label, icon: Icon, badge }) => (
-            <button
-              key={id}
-              className={`nav-item ${section === id ? "active" : ""}`}
-              onClick={() => navTo(id)}
-            >
-              <Icon size={20} />
-              <span>{label}</span>
-              {badge && pendingCount > 0 && (
-                <span className="nav-badge">{pendingCount}</span>
-              )}
-              {section === id && (
-                <ChevronRight
-                  size={14}
-                  style={{ marginLeft: "auto", opacity: 0.6 }}
-                />
-              )}
-            </button>
-          ))}
+          {/* Overview */}
+          <button
+            className={`nav-item ${section === "overview" ? "active" : ""}`}
+            onClick={() => navTo("overview")}
+          >
+            <LayoutDashboard size={18} />
+            <span>Overview</span>
+          </button>
+
+          {/* Applications */}
+          <button
+            className={`nav-item ${section === "applications" ? "active" : ""}`}
+            onClick={() => navTo("applications")}
+          >
+            <UserCheck size={18} />
+            <span>Applications</span>
+            {pendingCount > 0 && (
+              <span className="nav-badge">{pendingCount}</span>
+            )}
+          </button>
+
+          {/* Students */}
+          <button
+            className={`nav-item ${section === "students" ? "active" : ""}`}
+            onClick={() => navTo("students")}
+          >
+            <GraduationCap size={18} />
+            <span>Students</span>
+          </button>
+
+          {/* Staff */}
+          <button
+            className={`nav-item ${section === "staff" ? "active" : ""}`}
+            onClick={() => navTo("staff")}
+          >
+            <Users size={18} />
+            <span>Staff</span>
+          </button>
+
+          {/* Courses — expandable parent */}
+          <button
+            className={`nav-item ${COURSE_SECTIONS.includes(section) ? "nav-item-parent-active" : ""}`}
+            onClick={() => setCoursesOpen((o) => !o)}
+          >
+            <BookOpen size={18} />
+            <span>Courses</span>
+            <ChevronDown
+              size={14}
+              style={{
+                marginLeft: "auto",
+                transform: coursesOpen ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s",
+                opacity: 0.5,
+              }}
+            />
+          </button>
+
+          {coursesOpen && (
+            <div className="admin-subnav">
+              <button
+                className={`admin-subnav-item ${section === "courses" ? "active" : ""}`}
+                onClick={() => navTo("courses")}
+              >
+                <BookOpen size={14} /> Course Catalog
+              </button>
+              <button
+                className={`admin-subnav-item ${section === "sessions" ? "active" : ""}`}
+                onClick={() => navTo("sessions")}
+              >
+                <CalendarDays size={14} /> Open Courses
+              </button>
+            </div>
+          )}
+
+          {/* Rooms */}
+          <button
+            className={`nav-item ${section === "rooms" ? "active" : ""}`}
+            onClick={() => navTo("rooms")}
+          >
+            <DoorOpen size={18} />
+            <span>Rooms</span>
+          </button>
+
+          {/* Maintenance */}
+          <button
+            className={`nav-item ${section === "maintenance" ? "active" : ""}`}
+            onClick={() => navTo("maintenance")}
+          >
+            <Wrench size={18} />
+            <span>Maintenance</span>
+          </button>
         </nav>
       </aside>
 
-      {/* Main */}
+      {/* ── Main ── */}
       <div className="main-content">
         <header className="topbar">
           <button className="menu-btn" onClick={() => setSidebarOpen(true)}>
             <Menu size={20} />
           </button>
-          <span className="topbar-title">{sectionLabel}</span>
+          <div className="topbar-title-group">
+            <span className="topbar-title">{topbarLabel}</span>
+            {pageSubtitle && (
+              <>
+                <span className="topbar-title-sep">/</span>
+                <span className="topbar-subtitle">{pageSubtitle}</span>
+              </>
+            )}
+          </div>
           <div className="topbar-right">
             <span className="topbar-admin-label">Administrator</span>
             <button className="topbar-logout-btn" onClick={handleLogout}>
@@ -186,13 +278,59 @@ export default function Admin() {
               onCountChange={setPendingCount}
             />
           )}
-          {section === "students" && <Students />}
-          {section === "staff" && <Staff />}
-          {section === "courses" && <Courses />}
-          {section === "rooms" && <Rooms />}
+          {section === "students" && <Students onSubtitle={setPageSubtitle} />}
+          {section === "staff" && <Staff onSubtitle={setPageSubtitle} />}
+          {section === "courses" && <Courses onSubtitle={setPageSubtitle} />}
+          {section === "sessions" && <CourseSessions />}
+          {section === "rooms" && <Rooms onSubtitle={setPageSubtitle} />}
           {section === "maintenance" && <Maintenance />}
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── Course Sessions placeholder ─────────────────────────────────────────── */
+function CourseSessions() {
+  return (
+    <>
+      <div className="page-header">
+        <div>
+          <h2>Open Courses</h2>
+          <p>
+            Course sections offered each academic term — e.g. Math GEN-001 ·
+            2025/2026 Fall
+          </p>
+        </div>
+      </div>
+      <div
+        className="detail-card"
+        style={{ textAlign: "center", padding: "60px 24px" }}
+      >
+        <CalendarDays
+          size={48}
+          style={{
+            opacity: 0.25,
+            marginBottom: 16,
+            display: "block",
+            margin: "0 auto 16px",
+          }}
+        />
+        <p
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            marginBottom: 8,
+          }}
+        >
+          Coming soon
+        </p>
+        <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+          This section will let you open a course for a specific term, assign an
+          instructor, set a schedule, and manage enrolled students per section.
+        </p>
+      </div>
+    </>
   );
 }
