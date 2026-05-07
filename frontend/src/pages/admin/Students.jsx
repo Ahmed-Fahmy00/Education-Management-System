@@ -9,13 +9,18 @@ import {
   Hash,
   Building2,
   BookOpen,
+  FileText,
+  Printer
 } from "lucide-react";
 import { apiFetch, Badge, Spinner, EmptyState } from "./shared";
+import TranscriptDocument from "./TranscriptDocument";
 
 function StudentDetail({ student, onBack }) {
   const [transcript, setTranscript] = useState(null);
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [showTranscriptModal, setShowTranscriptModal] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -37,6 +42,23 @@ function StudentDetail({ student, onBack }) {
     }
     load();
   }, [student._id]);
+
+  const handleGenerateTranscript = async () => {
+    setGenerating(true);
+    try {
+      const res = await apiFetch(`/api/transcripts/${student._id}/generate`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        const updatedTranscript = await res.json();
+        setTranscript(updatedTranscript);
+      }
+    } catch (err) {
+      console.error("Failed to generate transcript", err);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   return (
     <>
@@ -103,9 +125,19 @@ function StudentDetail({ student, onBack }) {
           </div>
 
           {/* CGPA */}
-          {transcript && (
-            <div className="detail-card">
-              <div className="detail-card-title">Academic Summary</div>
+          <div className="detail-card">
+            <div className="detail-card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Academic Summary</span>
+              <button 
+                className="btn btn-primary btn-sm" 
+                onClick={handleGenerateTranscript} 
+                disabled={generating}
+              >
+                {generating ? <Spinner size={12} /> : <FileText size={14} />} 
+                {transcript ? "Update Transcript" : "Generate Transcript"}
+              </button>
+            </div>
+            {transcript ? (
               <div className="detail-rows">
                 <div className="detail-row">
                   <span className="detail-label">CGPA</span>
@@ -126,9 +158,21 @@ function StudentDetail({ student, onBack }) {
                     {transcript.records?.length ?? 0}
                   </span>
                 </div>
+                <div style={{ marginTop: 16 }}>
+                  <button 
+                    className="btn btn-secondary btn-sm" 
+                    onClick={() => setShowTranscriptModal(true)}
+                  >
+                    <FileText size={14} /> View Transcript Document
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            ) : (
+              <p style={{ fontSize: 13, color: "var(--text-tertiary)", padding: "12px 0" }}>
+                No transcript generated yet.
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Registrations */}
@@ -203,6 +247,27 @@ function StudentDetail({ student, onBack }) {
           )}
         </div>
       </div>
+
+      {showTranscriptModal && (
+        <div className="modal-backdrop" style={{ display: 'flex', flexDirection: 'column', padding: '40px' }}>
+          <div className="modal-content" style={{ maxWidth: '900px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: 0 }}>
+            <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-secondary)', position: 'sticky', top: 0, zIndex: 10 }}>
+              <h3 style={{ margin: 0 }}>Transcript Preview</h3>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
+                  <Printer size={14} /> Print / Save PDF
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setShowTranscriptModal(false)}>
+                  Close
+                </button>
+              </div>
+            </div>
+            <div id="print-area" style={{ padding: '40px', backgroundColor: '#e5e7eb', minHeight: '800px' }}>
+              <TranscriptDocument transcript={transcript} student={student} />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
