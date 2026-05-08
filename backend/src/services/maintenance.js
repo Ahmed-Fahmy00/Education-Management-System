@@ -1,7 +1,38 @@
 const MaintenanceReport = require("../models/MaintenanceReport");
+const Room = require("../models/Room");
+const { getIO } = require("../utils/socket");
 
-function createReport(payload) {
-  return MaintenanceReport.create(payload);
+async function createReport(payload) {
+  // Validate room exists
+  const room = await Room.findById(payload.room);
+  if (!room) {
+    const err = new Error("Room not found");
+    err.status = 404;
+    throw err;
+  }
+
+  const report = await MaintenanceReport.create(payload);
+  const populated = await MaintenanceReport.findById(report._id)
+    .populate("room", "name type building");
+
+  // Notify admin via socket
+  try {
+    const io = getIO();
+    if (io) {
+      io.emit("maintenance:new", {
+        id: report._id,
+        issueDescription: report.issueDescription,
+        priority: report.priority,
+        reportedBy: report.reportedBy,
+        roomName: room.name,
+        createdAt: report.createdAt,
+      });
+    }
+  } catch {
+    // non-critical — socket may not be initialised
+  }
+
+  return populated;
 }
 
 function listReports(query = {}) {
@@ -18,4 +49,8 @@ function updateReportStatus(id, status) {
   );
 }
 
-module.exports = { createReport, listReports, updateReportStatus };
+function countOpen() {
+  return MaintenanceReport.countDocuments({ status: "open" });
+}
+
+module.exports = { createReport, listReports, updateReportStatus, countOpen };

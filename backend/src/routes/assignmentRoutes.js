@@ -10,8 +10,6 @@ const {
 const { attachUser, requireRole } = require("../middleware/auth");
 const rateLimiter = require("../middleware/rateLimiter");
 
-const router = express.Router();
-
 // Apply Rate Limiting (50 requests per 15 mins for Admin operations)
 router.use(rateLimiter(50, 15 * 60 * 1000));
 

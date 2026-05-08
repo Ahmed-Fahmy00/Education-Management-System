@@ -9,6 +9,7 @@ import CourseRequirements from "./pages/CourseRequirements";
 import Rooms from "./pages/Rooms";
 import Chats from "./pages/Chats";
 import Forum from "./pages/Forum";
+import Maintenance from "./pages/Maintenance";
 import "./App.css";
 
 function getStoredUser() {
@@ -143,6 +144,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={[]}>
               <Rooms />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance"
+          element={
+            <ProtectedRoute allowedRoles={[]}>
+              <Maintenance />
             </ProtectedRoute>
           }
         />

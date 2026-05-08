@@ -46,6 +46,7 @@ export default function Admin() {
   );
   const [pendingCount, setPendingCount] = useState(null);
   const [pendingBookingCount, setPendingBookingCount] = useState(null);
+  const [openMaintenanceCount, setOpenMaintenanceCount] = useState(null);
   const [pageSubtitle, setPageSubtitle] = useState("");
   const [overviewStats, setOverviewStats] = useState({
     pending: null,
@@ -84,6 +85,7 @@ export default function Admin() {
           apiFetch("/api/rooms"),
           apiFetch("/api/users/admin/pending-applications"),
           apiFetch("/api/bookings?status=pending"),
+          apiFetch("/api/maintenance/open-count"),
         ]);
         const parse = async (r) => {
           if (r.status !== "fulfilled") return null;
@@ -93,12 +95,13 @@ export default function Admin() {
             return null;
           }
         };
-        const [sData, stData, cData, rData, aData, bData] = await Promise.all(
+        const [sData, stData, cData, rData, aData, bData, mData] = await Promise.all(
           results.map(parse),
         );
         const pending = aData?.applications?.length ?? 0;
         setPendingCount(pending);
         setPendingBookingCount(Array.isArray(bData) ? bData.length : 0);
+        setOpenMaintenanceCount(mData?.count ?? 0);
         setOverviewStats({
           pending,
           students: Array.isArray(sData) ? sData.length : null,
@@ -250,6 +253,9 @@ export default function Admin() {
           >
             <Wrench size={18} />
             <span>Maintenance</span>
+            {openMaintenanceCount > 0 && (
+              <span className="nav-badge">{openMaintenanceCount}</span>
+            )}
           </button>
 
           {/* Book a Room — opens user-facing room booking page */}

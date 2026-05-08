@@ -5,8 +5,9 @@ const { attachUser, requireRole } = require("../middleware/auth");
 const router = express.Router();
 
 router.use(attachUser);
-router.get("/", requireRole(["admin", "staff"]), controller.listReports);
-router.post("/", controller.createReport);
+router.get("/", controller.listReports);              // filtering is done in controller
+router.post("/", controller.createReport);            // any authenticated user can report
+router.get("/open-count", requireRole(["admin"]), controller.openCount);
 router.patch(
   "/:id/status",
   requireRole(["admin", "staff"]),

@@ -19,6 +19,7 @@ import {
   Megaphone,
   Loader2,
   CalendarDays,
+  Wrench,
 } from "lucide-react";
 import InstructorHome from "./InstructorHome";
 import "../styles/home.css";
@@ -148,6 +149,15 @@ export function UserLayout({ children, user, onLogout }) {
             <span>Room Booking</span>
           </button>
 
+          {/* Maintenance */}
+          <button
+            className={`hs-nav-item ${isActive("/maintenance") ? "active" : ""}`}
+            onClick={() => navTo("/maintenance")}
+          >
+            <Wrench size={20} />
+            <span>Maintenance</span>
+          </button>
+
           {/* Calendar — hidden for instructors */}
           {!isInstructor && (
             <button className="hs-nav-item disabled" title="Coming soon">
@@ -190,6 +200,7 @@ export function UserLayout({ children, user, onLogout }) {
             {location.pathname === "/home" && "Dashboard"}
             {location.pathname === "/course-requirements" && "Courses"}
             {location.pathname === "/rooms" && "Room Booking"}
+            {location.pathname === "/maintenance" && "Maintenance"}
             {location.pathname === "/profile" && "Profile"}
             {location.pathname === "/announcements" && "Announcements"}
             {location.pathname === "/chats" && "Chats"}
@@ -290,8 +301,8 @@ export default function Home() {
       // Sort by createdAt descending (newest first)
       const sorted = Array.isArray(data)
         ? [...data].sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-          )
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+        )
         : [];
       setAnnouncements(sorted);
     } catch {
@@ -346,8 +357,8 @@ export default function Home() {
           ) : (
             <div className="hs-posts-list">
               {posts.map((p) => (
-                <div 
-                  key={p._id} 
+                <div
+                  key={p._id}
                   className="hs-post-card"
                   onClick={() => navigate("/forums")}
                   style={{ cursor: "pointer" }}
