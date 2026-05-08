@@ -1,20 +1,17 @@
 const express = require("express");
-const {
-  createProfile,
-  getProfiles,
-  getProfileById,
-  updateProfile,
-} = require("../controllers/staffController");
-const { attachUser } = require("../middleware/auth");
-const rateLimiter = require("../middleware/rateLimiter");
+const controller = require("../controllers/staff");
+const { attachUser, requireRole } = require("../middleware/auth");
 
 const router = express.Router();
 
-// Apply Rate Limiting (100 requests per 15 mins)
-router.use(rateLimiter(100, 15 * 60 * 1000));
-
-// attachUser is used on all routes to detect user context
-router.use(attachUser);
+router.get("/", controller.listProfiles);
+router.post("/", requireRole(["admin"]), controller.createProfile);
+router.patch(
+  "/:id",
+  requireRole(["admin", "employee"]),
+  controller.updateProfile,
+);
+router.delete("/:id", requireRole(["admin"]), controller.deleteProfile);
 
 
 module.exports = router;

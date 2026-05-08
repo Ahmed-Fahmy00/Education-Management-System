@@ -91,7 +91,7 @@ export default function Chats() {
         getStudents(),
         getStaff(),
       ]);
-
+      console.log("Students fetched:", studentsRes);
       const chats = Array.isArray(chatsRes) ? chatsRes : [];
       setRecentChats(chats);
       setHasMoreChats(chats.length === 10);
