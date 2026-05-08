@@ -2,9 +2,14 @@ import { Loader2 } from "lucide-react";
 
 export function apiFetch(url, opts = {}) {
   const { headers, ...rest } = opts;
+  let user = null;
+  try { user = JSON.parse(localStorage.getItem("user")); } catch { /* ignore */ }
+  const authHeaders = {};
+  if (user?.id) authHeaders["x-user-id"] = user.id;
+  if (user?.role) authHeaders["x-user-role"] = user.role;
   return fetch(url, {
     ...rest,
-    headers: { "Content-Type": "application/json", ...(headers || {}) },
+    headers: { "Content-Type": "application/json", ...authHeaders, ...(headers || {}) },
   });
 }
 

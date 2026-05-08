@@ -9,6 +9,7 @@ import CourseRequirements from "./pages/CourseRequirements";
 import Rooms from "./pages/Rooms";
 import Chats from "./pages/Chats";
 import Forum from "./pages/Forum";
+import Maintenance from "./pages/Maintenance";
 import "./App.css";
 
 function getStoredUser() {
@@ -66,86 +67,18 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<RootRedirect />} />
-        <Route
-          path="/login"
-          element={
-            <AuthRoute>
-              <Login />
-            </AuthRoute>
-          }
-        />
-        <Route
-          path="/application"
-          element={
-            <AuthRoute>
-              <Application />
-            </AuthRoute>
-          }
-        />
-        <Route
-          path="/home"
-          element={
-            <ProtectedRoute allowedRoles={["student", "instructor"]}>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute allowedRoles={["student", "instructor"]}>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/announcements"
-          element={
-            <ProtectedRoute allowedRoles={["student", "instructor"]}>
-              <Announcements />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/chats"
-          element={
-            <ProtectedRoute allowedRoles={["student", "instructor"]}>
-              <Chats />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/forums"
-          element={
-            <ProtectedRoute allowedRoles={["student", "instructor"]}>
-              <Forum />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/course-requirements"
-          element={
-            <ProtectedRoute allowedRoles={["student", "instructor"]}>
-              <CourseRequirements />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <Admin />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/rooms"
-          element={
-            <ProtectedRoute allowedRoles={[]}>
-              <Rooms />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/login" element={ <AuthRoute> <Login /> </AuthRoute> } />
+        <Route path="/application" element={ <AuthRoute> <Application /> </AuthRoute> } />
+        <Route path="/home" element={ <ProtectedRoute allowedRoles={["student", "instructor"]}> <Home /> </ProtectedRoute> } />
+        <Route path="/profile" element={ <ProtectedRoute allowedRoles={["student", "instructor", "admin"]}> <Profile /> </ProtectedRoute> } />
+        <Route path="/profile/:kind/:id" element={ <ProtectedRoute allowedRoles={["student", "instructor", "admin"]}> <Profile /> </ProtectedRoute> } />
+        <Route path="/announcements" element={ <ProtectedRoute allowedRoles={["student", "instructor"]}> <Announcements /> </ProtectedRoute> } />
+        <Route path="/chats" element={ <ProtectedRoute allowedRoles={["student", "instructor"]}> <Chats /> </ProtectedRoute> } />
+        <Route path="/forums" element={ <ProtectedRoute allowedRoles={["student", "instructor"]}> <Forum /> </ProtectedRoute> } />
+        <Route path="/course-requirements" element={ <ProtectedRoute allowedRoles={["student", "instructor"]}> <CourseRequirements /> </ProtectedRoute> } />
+        <Route path="/admin/*" element={ <ProtectedRoute allowedRoles={["admin"]}> <Admin /> </ProtectedRoute> } />
+        <Route path="/rooms" element={ <ProtectedRoute allowedRoles={[]}> <Rooms /> </ProtectedRoute> } />
+        <Route path="/maintenance" element={ <ProtectedRoute allowedRoles={[]}> <Maintenance /> </ProtectedRoute> } />
         <Route path="*" element={<RootRedirect />} />
       </Routes>
     </BrowserRouter>

@@ -71,8 +71,14 @@ async function registerStudent({ student, course, semester }) {
 
 function listRegistrations(query = {}) {
   return CourseRegistration.find(query)
-    .populate("student", "studentId firstName lastName department")
+    .populate("student", "studentId name email department")
     .populate("course", "code title type department");
+}
+
+function getStudentsInCourse(courseId) {
+  return CourseRegistration.find({ course: courseId, status: "enrolled" })
+    .populate("student", "studentId name email department")
+    .populate("course", "code title");
 }
 
 function updateRegistration(id, payload) {
@@ -82,4 +88,4 @@ function updateRegistration(id, payload) {
   });
 }
 
-module.exports = { registerStudent, listRegistrations, updateRegistration };
+module.exports = { registerStudent, listRegistrations, getStudentsInCourse, updateRegistration };

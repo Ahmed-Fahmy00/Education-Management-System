@@ -7,8 +7,13 @@ const roomBookingSchema = new mongoose.Schema(
     bookedByName: { type: String, required: true, trim: true },
     bookedByRole: {
       type: String,
-      enum: ["staff", "admin", "professor", "ta"],
+      enum: ["staff", "admin", "professor", "ta", "student", "instructor"],
       required: true,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
     },
     startsAt: { type: Date, required: true },
     endsAt: { type: Date, required: true },

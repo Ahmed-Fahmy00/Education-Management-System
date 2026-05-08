@@ -57,7 +57,8 @@
 }
 
 /* ── Tabs ── */
-.tab-bar {
+.tab-bar,
+.rooms-tab-bar {
     display: flex;
     gap: 0;
     border-bottom: 2px solid #e5e7eb;
@@ -65,7 +66,8 @@
     overflow-x: auto;
 }
 
-.tab-btn {
+.tab-btn,
+.rooms-tab-btn {
     padding: 0.75rem 1.4rem;
     background: none;
     border: none;
@@ -79,16 +81,19 @@
     transition: color 0.15s, border-color 0.15s;
 }
 
-.tab-btn:hover {
+.tab-btn:hover,
+.rooms-tab-btn:hover {
     color: #1a202c;
 }
 
-.tab-active {
+.tab-active,
+.rooms-tab-active {
     color: #0d6efd;
     border-bottom-color: #0d6efd;
 }
 
-.tab-content {
+.tab-content,
+.rooms-tab-content {
     min-height: 300px;
 }
 

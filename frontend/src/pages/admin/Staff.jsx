@@ -1,16 +1,14 @@
 import { useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   RefreshCw,
   AlertCircle,
   Users,
   ArrowLeft,
   Mail,
-  BookOpen,
   Search,
   X,
-  Hash,
   Plus,
-  Calendar,
   Pencil,
   Trash2,
 } from "lucide-react";
@@ -204,200 +202,6 @@ function StaffModal({ onClose, onSaved }) {
         </form>
       </div>
     </div>
-  );
-}
-
-function StaffDetail({ member, onBack }) {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        // Fetch all courses then filter client-side — the API doesn't support
-        // filtering by instructorName as a query param reliably.
-        const res = await apiFetch("/api/courses");
-        const data = res.ok ? await res.json() : [];
-        const name = (member.name || member.fullName || "")
-          .trim()
-          .toLowerCase();
-        const assigned = Array.isArray(data)
-          ? data.filter(
-              (c) =>
-                c.instructorName &&
-                c.instructorName.trim().toLowerCase() === name,
-            )
-          : [];
-        setCourses(assigned);
-      } catch {
-        setCourses([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [member.name, member.fullName]);
-
-  const displayName = member.name || member.fullName || "—";
-  const initials = displayName
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-
-  return (
-    <>
-      {/* ── Back bar ── */}
-      <div style={{ marginBottom: 24 }}>
-        <button className="btn btn-secondary btn-sm" onClick={onBack}>
-          <ArrowLeft size={14} /> Back to Staff
-        </button>
-      </div>
-
-      {/* ── Hero card — all info here, no separate info card ── */}
-      <div
-        className="detail-hero-card"
-        style={{ marginBottom: 20, alignItems: "flex-start" }}
-      >
-        <div
-          className="detail-hero-avatar"
-          style={{
-            background:
-              "linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-cyan) 100%)",
-            flexShrink: 0,
-          }}
-        >
-          {initials}
-        </div>
-
-        <div className="detail-hero-info" style={{ flex: 1 }}>
-          {/* Name + quick badges */}
-          <div className="detail-hero-name">{displayName}</div>
-          <div className="detail-hero-sub">{member.email}</div>
-          <div className="detail-hero-meta" style={{ marginBottom: 14 }}>
-            <span className="detail-hero-chip mono">
-              <Hash size={12} /> {member.staffId || "Not assigned"}
-            </span>
-            <Badge variant="purple">{member.role}</Badge>
-          </div>
-
-          {/* Inline detail grid */}
-          <div className="room-hero-details">
-            <div className="room-hero-detail-item">
-              <span className="room-hero-detail-label">
-                <Mail size={12} /> Email
-              </span>
-              <span
-                className="room-hero-detail-value"
-                style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  wordBreak: "break-all",
-                }}
-              >
-                {member.email}
-              </span>
-            </div>
-            <div className="room-hero-detail-item">
-              <span className="room-hero-detail-label">Role</span>
-              <span className="room-hero-detail-value">
-                <Badge variant="purple">{member.role}</Badge>
-              </span>
-            </div>
-            <div className="room-hero-detail-item">
-              <span className="room-hero-detail-label">
-                <Hash size={12} /> Staff ID
-              </span>
-              <span
-                className="room-hero-detail-value"
-                style={{ fontFamily: "monospace", fontSize: 13 }}
-              >
-                {member.staffId || "—"}
-              </span>
-            </div>
-            <div className="room-hero-detail-item">
-              <span className="room-hero-detail-label">
-                <Calendar size={12} /> Joined
-              </span>
-              <span
-                className="room-hero-detail-value"
-                style={{ fontSize: 13, fontWeight: 500 }}
-              >
-                {new Date(member.createdAt).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Courses card — full width ── */}
-      <div className="detail-card">
-        <div className="detail-card-title">
-          <BookOpen size={14} /> Courses Teaching
-          <span className="detail-card-count">{courses.length}</span>
-        </div>
-        {loading ? (
-          <div className="loading" style={{ padding: 32 }}>
-            <Spinner size={16} /> Loading…
-          </div>
-        ) : courses.length === 0 ? (
-          <div className="detail-empty">
-            <BookOpen size={32} />
-            <p>No courses assigned to this instructor</p>
-          </div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>Title</th>
-                  <th>Type</th>
-                  <th>Credits</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {courses.map((c) => (
-                  <tr key={c._id}>
-                    <td>
-                      <code
-                        style={{
-                          background: "var(--bg-tertiary)",
-                          padding: "2px 8px",
-                          borderRadius: 4,
-                          fontSize: 12,
-                        }}
-                      >
-                        {c.code}
-                      </code>
-                    </td>
-                    <td style={{ fontWeight: 600 }}>{c.title}</td>
-                    <td>
-                      <Badge variant={c.type === "core" ? "info" : "warning"}>
-                        {c.type}
-                      </Badge>
-                    </td>
-                    <td style={{ textAlign: "center" }}>{c.credits}</td>
-                    <td>
-                      <Badge variant={c.isActive ? "success" : "danger"}>
-                        {c.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </>
   );
 }
 
@@ -639,6 +443,7 @@ function StaffDeleteConfirm({ member, onClose, onDeleted }) {
 }
 
 export default function Staff({ onSubtitle }) {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -646,15 +451,12 @@ export default function Staff({ onSubtitle }) {
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [detailTarget, setDetailTarget] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await apiFetch("/api/staff");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      const data = await apiFetch("/api/staff");
       setItems(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e.message || "Failed to load");
@@ -678,21 +480,6 @@ export default function Staff({ onSubtitle }) {
       (s.staffId || "").toLowerCase().includes(q)
     );
   });
-
-  if (detailTarget) {
-    onSubtitle?.(detailTarget.name || detailTarget.fullName || "");
-    return (
-      <StaffDetail
-        member={detailTarget}
-        onBack={() => {
-          setDetailTarget(null);
-          onSubtitle?.("");
-        }}
-      />
-    );
-  }
-
-  onSubtitle?.("");
 
   return (
     <>
@@ -828,7 +615,7 @@ export default function Staff({ onSubtitle }) {
                   <tr
                     key={s._id}
                     style={{ cursor: "pointer" }}
-                    onClick={() => setDetailTarget(s)}
+                    onClick={() => navigate(`/profile/staff/${s._id}`)}
                   >
                     <td>
                       <div

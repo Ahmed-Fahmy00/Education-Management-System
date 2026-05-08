@@ -8,6 +8,7 @@ import {
   MessageSquare,
   LayoutDashboard,
   User,
+  Search,
   ChevronRight,
   ChevronDown,
   Menu,
@@ -19,7 +20,11 @@ import {
   Megaphone,
   Loader2,
   CalendarDays,
+  Wrench,
 } from "lucide-react";
+import InstructorHome from "./InstructorHome";
+import { staffApi } from "../api/staff";
+import { studentApi } from "../api/students";
 import "../styles/home.css";
 
 /* ── helpers ──────────────────────────────────────────────────────────────── */
@@ -34,27 +39,121 @@ function timeAgo(dateStr) {
   return `${d}d ago`;
 }
 
+function matchesSearch(item, needle) {
+  if (!needle) return true;
+
+  const haystacks = [
+    item?.name,
+    item?.email,
+    item?.department,
+    item?.role,
+    item?.staffId,
+    item?.studentId,
+    item?.parentEmail,
+    item?.phone,
+    item?.officeLocation,
+    item?.firstName,
+    item?.lastName,
+  ];
+
+  return haystacks.some((value) =>
+    String(value || "").toLowerCase().includes(needle),
+  );
+}
+
 /* ── Shared layout ────────────────────────────────────────────────────────── */
 export function UserLayout({ children, user, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const isInstructor = user?.role === "instructor";
   const COURSES_PATHS = ["/course-requirements"];
   const [coursesOpen, setCoursesOpen] = useState(() =>
     COURSES_PATHS.includes(location.pathname),
   );
   const menuRef = useRef(null);
+  const searchRef = useRef(null);
 
   useEffect(() => {
     function handleClick(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMenuOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  useEffect(() => {
+    const query = searchTerm.trim();
+    const needle = query.toLowerCase();
+
+    if (query.length < 2) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const [staffRows, studentRows] = await Promise.allSettled([
+          staffApi.getProfiles({ q: query }),
+          studentApi.searchStudents(query),
+        ]);
+
+        if (!active) return;
+
+        const staffResults =
+          staffRows.status === "fulfilled" && Array.isArray(staffRows.value)
+            ? staffRows.value.map((item) => ({
+                ...item,
+                kind: "staff",
+                label: item._type === "profile" ? "Staff profile" : "Staff member",
+              }))
+            : [];
+
+        const studentResults =
+          studentRows.status === "fulfilled" && Array.isArray(studentRows.value)
+            ? studentRows.value.map((item) => ({
+                ...item,
+                kind: "student",
+                label: "Student",
+              }))
+            : [];
+
+        const filteredResults = [...staffResults, ...studentResults].filter((item) =>
+          matchesSearch(item, needle),
+        );
+
+        setSearchResults(filteredResults.slice(0, 8));
+        setSearchOpen(true);
+      } catch {
+        if (active) {
+          setSearchResults([]);
+          setSearchOpen(true);
+        }
+      } finally {
+        if (active) {
+          setSearchLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [searchTerm]);
 
   const initials = user.name
     .split(" ")
@@ -68,6 +167,17 @@ export function UserLayout({ children, user, onLogout }) {
   const navTo = (path) => {
     navigate(path);
     setSidebarOpen(false);
+  };
+
+  const openProfile = (result) => {
+    setSearchTerm("");
+    setSearchResults([]);
+    setSearchOpen(false);
+    navigate(
+      result.kind === "student"
+        ? `/profile/student/${result._id}`
+        : `/profile/staff/${result._id}`,
+    );
   };
 
   return (
@@ -98,39 +208,43 @@ export function UserLayout({ children, user, onLogout }) {
             <span>Dashboard</span>
           </button>
 
-          {/* Courses (expandable) */}
-          <button
-            className={`hs-nav-item ${COURSES_PATHS.includes(location.pathname) ? "hs-nav-item-parent-active" : ""}`}
-            onClick={() => setCoursesOpen((o) => !o)}
-          >
-            <BookOpen size={20} />
-            <span>Courses</span>
-            <ChevronDown
-              size={14}
-              style={{
-                marginLeft: "auto",
-                transform: coursesOpen ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 0.2s",
-                opacity: 0.5,
-              }}
-            />
-          </button>
-
-          {coursesOpen && (
-            <div className="hs-subnav">
+          {/* Courses (expandable) — hidden for instructors */}
+          {!isInstructor && (
+            <>
               <button
-                className={`hs-subnav-item ${isActive("/course-requirements") ? "active" : ""}`}
-                onClick={() => navTo("/course-requirements")}
+                className={`hs-nav-item ${COURSES_PATHS.includes(location.pathname) ? "hs-nav-item-parent-active" : ""}`}
+                onClick={() => setCoursesOpen((o) => !o)}
               >
-                <BookOpen size={15} />
-                My Courses
+                <BookOpen size={20} />
+                <span>Courses</span>
+                <ChevronDown
+                  size={14}
+                  style={{
+                    marginLeft: "auto",
+                    transform: coursesOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s",
+                    opacity: 0.5,
+                  }}
+                />
               </button>
-              <button className="hs-subnav-item disabled" title="Coming soon">
-                <FileText size={15} />
-                Register Courses
-                <span className="hs-nav-soon">Soon</span>
-              </button>
-            </div>
+
+              {coursesOpen && (
+                <div className="hs-subnav">
+                  <button
+                    className={`hs-subnav-item ${isActive("/course-requirements") ? "active" : ""}`}
+                    onClick={() => navTo("/course-requirements")}
+                  >
+                    <BookOpen size={15} />
+                    My Courses
+                  </button>
+                  <button className="hs-subnav-item disabled" title="Coming soon">
+                    <FileText size={15} />
+                    Register Courses
+                    <span className="hs-nav-soon">Soon</span>
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {/* Room Booking */}
@@ -142,12 +256,23 @@ export function UserLayout({ children, user, onLogout }) {
             <span>Room Booking</span>
           </button>
 
-          {/* Calendar */}
-          <button className="hs-nav-item disabled" title="Coming soon">
-            <CalendarDays size={20} />
-            <span>Calendar</span>
-            <span className="hs-nav-soon">Soon</span>
+          {/* Maintenance */}
+          <button
+            className={`hs-nav-item ${isActive("/maintenance") ? "active" : ""}`}
+            onClick={() => navTo("/maintenance")}
+          >
+            <Wrench size={20} />
+            <span>Maintenance</span>
           </button>
+
+          {/* Calendar — hidden for instructors */}
+          {!isInstructor && (
+            <button className="hs-nav-item disabled" title="Coming soon">
+              <CalendarDays size={20} />
+              <span>Calendar</span>
+              <span className="hs-nav-soon">Soon</span>
+            </button>
+          )}
 
           {/* Chats */}
           <button
@@ -182,10 +307,66 @@ export function UserLayout({ children, user, onLogout }) {
             {location.pathname === "/home" && "Dashboard"}
             {location.pathname === "/course-requirements" && "Courses"}
             {location.pathname === "/rooms" && "Room Booking"}
-            {location.pathname === "/profile" && "Profile"}
+            {location.pathname === "/maintenance" && "Maintenance"}
+            {location.pathname.startsWith("/profile") && "Profile"}
             {location.pathname === "/announcements" && "Announcements"}
             {location.pathname === "/chats" && "Chats"}
           </span>
+
+          <div className="hs-topbar-search" ref={searchRef}>
+            <div className="hs-topbar-search-input">
+              <Search size={16} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => {
+                  if (searchTerm.trim().length >= 2) {
+                    setSearchOpen(true);
+                  }
+                }}
+                placeholder="Search staff or students"
+                aria-label="Search profiles"
+              />
+              {searchLoading && <Loader2 size={14} className="hs-spin" />}
+            </div>
+
+            {searchOpen && searchTerm.trim().length >= 2 && (
+              <div className="hs-topbar-search-results">
+                {searchResults.length === 0 ? (
+                  <div className="hs-topbar-search-empty">
+                    No matching profiles found.
+                  </div>
+                ) : (
+                  searchResults.map((result) => (
+                    <button
+                      key={`${result.kind}-${result._id}`}
+                      type="button"
+                      className="hs-topbar-search-result"
+                      onClick={() => openProfile(result)}
+                    >
+                      <div className="hs-topbar-search-avatar">
+                        {(result.name || "?")
+                          .split(" ")
+                          .slice(0, 2)
+                          .map((part) => part[0])
+                          .join("")
+                          .toUpperCase()}
+                      </div>
+                      <div className="hs-topbar-search-copy">
+                        <strong>{result.name || "Unnamed profile"}</strong>
+                        <span>
+                          {result.label}
+                          {result.department ? ` · ${result.department}` : ""}
+                        </span>
+                      </div>
+                      <ChevronRight size={14} />
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="hs-topbar-right" ref={menuRef}>
             {/* Bell icon → announcements */}
@@ -282,8 +463,8 @@ export default function Home() {
       // Sort by createdAt descending (newest first)
       const sorted = Array.isArray(data)
         ? [...data].sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-          )
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+        )
         : [];
       setAnnouncements(sorted);
     } catch {
@@ -313,6 +494,14 @@ export default function Home() {
 
   if (!user) return <div className="home-loading">No user data</div>;
 
+  // Show instructor home for instructor users
+  if (user.role === "instructor") {
+    return (
+      <UserLayout user={user} onLogout={handleLogout}>
+        <InstructorHome user={user} />
+      </UserLayout>
+    );
+  }
   return (
     <UserLayout user={user} onLogout={handleLogout}>
       <div className="hs-home-grid">
@@ -330,8 +519,8 @@ export default function Home() {
           ) : (
             <div className="hs-posts-list">
               {posts.map((p) => (
-                <div 
-                  key={p._id} 
+                <div
+                  key={p._id}
                   className="hs-post-card"
                   onClick={() => navigate("/forums")}
                   style={{ cursor: "pointer" }}

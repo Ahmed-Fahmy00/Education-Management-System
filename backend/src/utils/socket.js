@@ -1,13 +1,16 @@
 const { Server } = require("socket.io");
 const Message = require("../models/Message");
 
+let _io = null;
+
 function initSocket(httpServer, corsOrigin = "*") {
-  const io = new Server(httpServer, {
+  _io = new Server(httpServer, {
     cors: {
       origin: corsOrigin,
       methods: ["GET", "POST"],
     },
   });
+  const io = _io;
 
   // Socket.IO event handlers
   io.on("connection", (socket) => {
@@ -72,4 +75,8 @@ function initSocket(httpServer, corsOrigin = "*") {
   return io;
 }
 
-module.exports = { initSocket };
+function getIO() {
+  return _io;
+}
+
+module.exports = { initSocket, getIO };

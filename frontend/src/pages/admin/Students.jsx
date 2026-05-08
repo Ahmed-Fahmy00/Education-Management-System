@@ -1,4 +1,5 @@
 ﻿import { useState, useCallback, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   RefreshCw,
   Search,
@@ -17,7 +18,7 @@ import {
   Users,
   Calendar,
   FileText,
-  Printer
+  Printer,
 } from "lucide-react";
 import { apiFetch, Badge, Spinner, EmptyState } from "./shared";
 import TranscriptDocument from "./TranscriptDocument";
@@ -51,12 +52,12 @@ function StudentModal({ initial, onClose, onSaved }) {
   const [form, setForm] = useState(
     initial
       ? {
-        name: initial.name || "",
-        email: initial.email || "",
-        password: "",
-        department: initial.department || "",
-        parentEmail: initial.parentEmail || "",
-      }
+          name: initial.name || "",
+          email: initial.email || "",
+          password: "",
+          department: initial.department || "",
+          parentEmail: initial.parentEmail || "",
+        }
       : EMPTY_STUDENT,
   );
   const [saving, setSaving] = useState(false);
@@ -363,6 +364,7 @@ function DeleteConfirm({ student, onClose, onDeleted }) {
 
 function StudentDetail({ student, onBack, onEdit }) {
   const [registrations, setRegistrations] = useState([]);
+  const [transcript, setTranscript] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [showTranscriptModal, setShowTranscriptModal] = useState(false);
@@ -371,11 +373,17 @@ function StudentDetail({ student, onBack, onEdit }) {
     async function load() {
       setLoading(true);
       try {
-        const rRes = await apiFetch(
-          `/api/registrations?student=${student._id}`,
+        const [rData, tData] = await Promise.allSettled([
+          apiFetch(`/api/registrations?student=${student._id}`),
+          apiFetch(`/api/transcripts/${student._id}`),
+        ]);
+
+        setRegistrations(
+          rData.status === "fulfilled" && Array.isArray(rData.value)
+            ? rData.value
+            : [],
         );
-        const rData = rRes.ok ? await rRes.json() : [];
-        setRegistrations(Array.isArray(rData) ? rData : []);
+        setTranscript(tData.status === "fulfilled" ? tData.value : null);
       } catch {
         /* ignore */
       } finally {
@@ -387,22 +395,22 @@ function StudentDetail({ student, onBack, onEdit }) {
 
   const initials = student.name
     ? student.name
-      .split(" ")
-      .slice(0, 2)
-      .map((w) => w[0])
-      .join("")
-      .toUpperCase()
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
     : "?";
   const handleGenerateTranscript = async () => {
     setGenerating(true);
     try {
-      const res = await apiFetch(`/api/transcripts/${student._id}/generate`, {
-        method: "POST"
-      });
-      if (res.ok) {
-        const updatedTranscript = await res.json();
-        setTranscript(updatedTranscript);
-      }
+      const updatedTranscript = await apiFetch(
+        `/api/transcripts/${student._id}/generate`,
+        {
+          method: "POST",
+        },
+      );
+      setTranscript(updatedTranscript);
     } catch (err) {
       console.error("Failed to generate transcript", err);
     } finally {
@@ -476,7 +484,14 @@ function StudentDetail({ student, onBack, onEdit }) {
 
           {/* CGPA */}
           <div className="detail-card">
-            <div className="detail-card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div
+              className="detail-card-title"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <span>Academic Summary</span>
               <button
                 className="btn btn-primary btn-sm"
@@ -518,7 +533,13 @@ function StudentDetail({ student, onBack, onEdit }) {
                 </div>
               </div>
             ) : (
-              <p style={{ fontSize: 13, color: "var(--text-tertiary)", padding: "12px 0" }}>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "var(--text-tertiary)",
+                  padding: "12px 0",
+                }}
+              >
                 No transcript generated yet.
               </p>
             )}
@@ -599,20 +620,57 @@ function StudentDetail({ student, onBack, onEdit }) {
       </div>
 
       {showTranscriptModal && (
-        <div className="modal-backdrop" style={{ display: 'flex', flexDirection: 'column', padding: '40px' }}>
-          <div className="modal-content" style={{ maxWidth: '900px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: 0 }}>
-            <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-secondary)', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div
+          className="modal-backdrop"
+          style={{ display: "flex", flexDirection: "column", padding: "40px" }}
+        >
+          <div
+            className="modal-content"
+            style={{
+              maxWidth: "900px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              padding: 0,
+            }}
+          >
+            <div
+              style={{
+                padding: "16px",
+                borderBottom: "1px solid var(--border)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                backgroundColor: "var(--bg-secondary)",
+                position: "sticky",
+                top: 0,
+                zIndex: 10,
+              }}
+            >
               <h3 style={{ margin: 0 }}>Transcript Preview</h3>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => window.print()}
+                >
                   <Printer size={14} /> Print / Save PDF
                 </button>
-                <button className="btn btn-secondary btn-sm" onClick={() => setShowTranscriptModal(false)}>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setShowTranscriptModal(false)}
+                >
                   Close
                 </button>
               </div>
             </div>
-            <div id="print-area" style={{ padding: '40px', backgroundColor: '#e5e7eb', minHeight: '800px' }}>
+            <div
+              id="print-area"
+              style={{
+                padding: "40px",
+                backgroundColor: "#e5e7eb",
+                minHeight: "800px",
+              }}
+            >
               <TranscriptDocument transcript={transcript} student={student} />
             </div>
           </div>
@@ -645,17 +703,18 @@ function Toast({ message, type = "success", onDone }) {
 function Avatar({ name }) {
   const initials = name
     ? name
-      .split(" ")
-      .slice(0, 2)
-      .map((w) => w[0])
-      .join("")
-      .toUpperCase()
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
     : "?";
   return <span className="student-avatar">{initials}</span>;
 }
 
 /* ── Main Students page ─────────────────────────────────────────────────── */
 export default function Students({ onSubtitle }) {
+  const navigate = useNavigate();
   const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -673,9 +732,7 @@ export default function Students({ onSubtitle }) {
       const url = q
         ? `/api/students?q=${encodeURIComponent(q)}`
         : "/api/students";
-      const res = await apiFetch(url);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      const data = await apiFetch(url);
       setAllItems(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e.message || "Failed to load students");
@@ -687,6 +744,10 @@ export default function Students({ onSubtitle }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    onSubtitle?.(detailTarget ? detailTarget.name : "");
+  }, [detailTarget, onSubtitle]);
 
   /* Debounced search — fires API call 350ms after user stops typing */
   const handleSearch = (e) => {
@@ -715,7 +776,6 @@ export default function Students({ onSubtitle }) {
   const filtered = allItems;
 
   if (detailTarget) {
-    onSubtitle?.(detailTarget.name);
     return (
       <StudentDetail
         student={detailTarget}
@@ -731,8 +791,6 @@ export default function Students({ onSubtitle }) {
       />
     );
   }
-
-  onSubtitle?.("");
 
   return (
     <>
@@ -839,7 +897,7 @@ export default function Students({ onSubtitle }) {
                   <tr
                     key={s._id}
                     style={{ cursor: "pointer" }}
-                    onClick={() => setDetailTarget(s)}
+                    onClick={() => navigate(`/profile/student/${s._id}`)}
                   >
                     <td>
                       <div

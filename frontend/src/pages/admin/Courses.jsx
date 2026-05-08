@@ -277,6 +277,7 @@ const EMPTY = {
   department: "",
   capacity: 80,
   instructorName: "",
+  instructorId: null,
   prerequisites: [],
   isActive: true,
 };
@@ -299,7 +300,8 @@ function CourseModal({
           type: initial.type,
           department: initial.department,
           capacity: initial.capacity,
-          instructorName: initial.instructorName || "",
+          instructorName: initial.instructorId?.name || initial.instructorName || "",
+          instructorId: initial.instructorId?._id || initial.instructorId || null,
           prerequisites: initial.prerequisites || [],
           isActive: initial.isActive,
         }
@@ -367,7 +369,7 @@ function CourseModal({
         credits: Number(form.credits),
         capacity: Number(form.capacity),
         type: form.type,
-        instructorName: form.instructorName.trim(),
+        instructorId: form.instructorId || null,
         prerequisites: form.prerequisites || [],
         isActive: form.isActive,
         department:
@@ -511,7 +513,17 @@ function CourseModal({
               <label className="modal-label">Instructor</label>
               <InstructorSearch
                 value={form.instructorName}
-                onChange={(v) => set("instructorName", v)}
+                onChange={(v) => {
+                  // Find the instructor in staffList by name and set both name and ID
+                  const instructor = (staffList || []).find(
+                    (s) => s && s.name && s.name === v
+                  );
+                  setForm((f) => ({
+                    ...f,
+                    instructorName: v,
+                    instructorId: instructor ? instructor._id : null,
+                  }));
+                }}
                 staffList={staffList}
               />
             </div>
@@ -818,9 +830,9 @@ function CourseDetail({ course, onBack, onEdit, onDelete }) {
               <BookOpen size={12} /> {course.credits} credit
               {course.credits !== 1 ? "s" : ""}
             </span>
-            {course.instructorName && (
+            {(course.instructorId?.name || course.instructorName) && (
               <span className="detail-hero-chip">
-                <Users size={12} /> {course.instructorName}
+                <Users size={12} /> {course.instructorId?.name || course.instructorName}
               </span>
             )}
             <span className="detail-hero-chip">
@@ -954,11 +966,12 @@ export default function Courses() {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     const statusText = c.isActive ? "active" : "inactive";
+    const instructorName = c.instructorId?.name || c.instructorName || "";
     return (
       (c.code || "").toLowerCase().includes(q) ||
       (c.title || "").toLowerCase().includes(q) ||
       (c.department || "").toLowerCase().includes(q) ||
-      (c.instructorName || "").toLowerCase().includes(q) ||
+      instructorName.toLowerCase().includes(q) ||
       (c.type || "").toLowerCase().includes(q) ||
       statusText.includes(q)
     );
@@ -1158,7 +1171,7 @@ export default function Courses() {
                       {c.department}
                     </td>
                     <td style={{ color: "var(--text-secondary)" }}>
-                      {c.instructorName || "—"}
+                      {c.instructorId?.name || c.instructorName || "—"}
                     </td>
                     <td style={{ textAlign: "center" }}>{c.credits}</td>
                     <td>
