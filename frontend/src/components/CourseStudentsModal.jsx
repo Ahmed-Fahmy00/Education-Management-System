@@ -135,6 +135,12 @@ export default function CourseStudentsModal({ isOpen, onClose, course }) {
     }
   };
 
+  function handleGradeSaved(registrationId, grade, status) {
+    setRegistrations((prev) =>
+      prev.map((r) => r._id === registrationId ? { ...r, grade, status } : r),
+    );
+  }
+
   if (!isOpen || !course) return null;
 
   const enrolledCount = registrations.filter(

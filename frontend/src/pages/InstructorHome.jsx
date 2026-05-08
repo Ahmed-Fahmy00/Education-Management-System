@@ -260,6 +260,7 @@ export default function InstructorHome({ user }) {
           setSelectedCourse(null);
         }}
         course={selectedCourse}
+        user={user}
       />
     </div>
   );

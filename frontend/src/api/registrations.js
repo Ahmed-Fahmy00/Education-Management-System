@@ -39,3 +39,13 @@ export function completeCourse(courseId) {
     method: "POST",
   });
 }
+
+export function updateRegistrationGrade(registrationId, { grade, status }) {
+  const payload = {}
+  if (grade !== undefined) payload.grade = grade
+  if (status !== undefined) payload.status = status
+  return apiFetch(`/api/registrations/${registrationId}/grade`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}

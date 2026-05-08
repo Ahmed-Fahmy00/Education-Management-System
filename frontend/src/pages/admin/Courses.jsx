@@ -12,8 +12,10 @@ import {
   Users,
   ArrowLeft,
   Search,
+  Save,
 } from "lucide-react";
 import { apiFetch, Badge, Spinner, EmptyState } from "./shared";
+import { updateRegistrationGrade } from "../../api/registrations";
 
 /* ── Static data ──────────────────────────────────────────────────────────── */
 const DEPARTMENTS = [
@@ -56,6 +58,86 @@ const GRADE_COLORS = {
   D: "#f97316",
   F: "#ef4444",
 };
+
+const VALID_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"];
+
+/* ── Inline grade editor cell ─────────────────────────────────────────────── */
+function GradeCell({ registration, onSaved }) {
+  const [editing, setEditing] = useState(false);
+  const [selected, setSelected] = useState(registration.grade || "");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      await updateRegistrationGrade(registration._id, {
+        grade: selected,
+        status: "completed",
+      });
+      onSaved(registration._id, selected, "completed");
+      setEditing(false);
+    } catch (err) {
+      alert(err.message || "Failed to save grade");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!editing) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        {registration.grade ? (
+          <span style={{ fontWeight: 700, color: GRADE_COLORS[registration.grade] || "inherit" }}>
+            {registration.grade}
+          </span>
+        ) : (
+          <span style={{ color: "var(--text-tertiary)" }}>—</span>
+        )}
+        <button
+          title="Edit grade"
+          onClick={() => { setSelected(registration.grade || ""); setEditing(true); }}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--text-tertiary)", display: "flex", alignItems: "center" }}
+        >
+          <Pencil size={12} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <select
+        value={selected}
+        onChange={(e) => setSelected(e.target.value)}
+        style={{
+          fontSize: 12, padding: "2px 4px", borderRadius: 4,
+          border: "1px solid var(--border-color)", background: "var(--bg-secondary)",
+          color: "var(--text-primary)",
+        }}
+        autoFocus
+      >
+        <option value="">— Select —</option>
+        {VALID_GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
+      </select>
+      <button
+        onClick={handleSave}
+        disabled={saving || !selected}
+        title="Save"
+        style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--accent-primary)", display: "flex", alignItems: "center" }}
+      >
+        {saving ? <Spinner size={12} /> : <Save size={12} />}
+      </button>
+      <button
+        onClick={() => setEditing(false)}
+        title="Cancel"
+        style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--text-tertiary)", display: "flex", alignItems: "center" }}
+      >
+        <X size={12} />
+      </button>
+    </div>
+  );
+}
 
 /* ── Instructor search input ──────────────────────────────────────────────── */
 // value = selected instructor _id (or ""), displayValue = name shown in input
@@ -742,6 +824,12 @@ function CourseDetail({ course, onBack, onEdit, onDelete }) {
     load();
   }, [course._id]);
 
+  function handleGradeSaved(registrationId, grade, status) {
+    setRegistrations((prev) =>
+      prev.map((r) => r._id === registrationId ? { ...r, grade, status } : r),
+    );
+  }
+
   const enrolledCount = registrations.filter(
     (r) => r.status === "enrolled",
   ).length;
@@ -859,17 +947,17 @@ function CourseDetail({ course, onBack, onEdit, onDelete }) {
         </div>
       </div>
 
-      {/* ── Enrolled students — full width ── */}
+      {/* ── Students & Grades — full width ── */}
       <div className="detail-card">
         <div className="detail-card-title">
-          <Users size={14} /> Enrolled Students
-          <span className="detail-card-count">{enrolledCount}</span>
+          <Users size={14} /> Students &amp; Grades
+          <span className="detail-card-count">{enrolledCount} enrolled</span>
         </div>
         {loadingReg ? (
           <div className="loading" style={{ padding: 32 }}>
             <Spinner size={16} /> Loading…
           </div>
-        ) : enrolledCount === 0 ? (
+        ) : registrations.filter((r) => r.status !== "dropped").length === 0 ? (
           <div className="detail-empty">
             <Users size={32} />
             <p>No students enrolled yet</p>
@@ -882,11 +970,12 @@ function CourseDetail({ course, onBack, onEdit, onDelete }) {
                   <th>Student</th>
                   <th>Semester</th>
                   <th>Grade</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {registrations
-                  .filter((r) => r.status === "enrolled")
+                  .filter((r) => r.status !== "dropped")
                   .map((r) => (
                     <tr key={r._id}>
                       <td style={{ fontWeight: 600 }}>
@@ -899,20 +988,20 @@ function CourseDetail({ course, onBack, onEdit, onDelete }) {
                         {r.semester}
                       </td>
                       <td>
-                        {r.grade ? (
-                          <span
-                            style={{
-                              fontWeight: 700,
-                              color: GRADE_COLORS[r.grade] || "inherit",
-                            }}
-                          >
-                            {r.grade}
-                          </span>
-                        ) : (
-                          <span style={{ color: "var(--text-tertiary)" }}>
-                            —
-                          </span>
-                        )}
+                        <GradeCell registration={r} onSaved={handleGradeSaved} />
+                      </td>
+                      <td>
+                        <Badge
+                          variant={
+                            r.status === "enrolled"
+                              ? "success"
+                              : r.status === "completed"
+                                ? "info"
+                                : "danger"
+                          }
+                        >
+                          {r.status}
+                        </Badge>
                       </td>
                     </tr>
                   ))}
