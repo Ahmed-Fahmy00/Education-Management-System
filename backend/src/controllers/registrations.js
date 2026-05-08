@@ -8,7 +8,10 @@ async function registerStudent(req, res, next) {
     if (
       err.message === "Course not available" ||
       err.message === "Course capacity reached" ||
-      err.message === "Prerequisites not satisfied"
+      err.message === "Prerequisites not satisfied" ||
+      err.message === "Already enrolled in this course for the semester" ||
+      err.message === "Course already completed" ||
+      err.message === "Exceeds maximum allowed credits for the semester"
     ) {
       return res.status(400).json({ message: err.message });
     }
