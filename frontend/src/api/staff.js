@@ -37,7 +37,7 @@ export const staffApi = {
    */
   updateProfile: async (id, data, userId, userRole) => {
     return apiFetch(`${API_BASE}/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'x-user-id': userId,
         'x-user-role': userRole,

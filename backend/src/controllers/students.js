@@ -52,10 +52,27 @@ async function getStudent(req, res, next) {
 
 async function updateStudent(req, res, next) {
   try {
-    const updated = await studentsService.updateStudent(
-      req.params.id,
-      req.body,
+    if (req.user.role !== "admin" && req.user.id !== req.params.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const updates = {};
+    ["name", "email", "department", "parentEmail", "password"].forEach(
+      (field) => {
+        if (req.body[field] !== undefined) {
+          updates[field] = req.body[field];
+        }
+      },
     );
+
+    if (updates.name) updates.name = updates.name.trim();
+    if (updates.email) updates.email = updates.email.trim().toLowerCase();
+    if (updates.department) updates.department = updates.department.trim();
+    if (updates.parentEmail) {
+      updates.parentEmail = updates.parentEmail.trim().toLowerCase();
+    }
+
+    const updated = await studentsService.updateStudent(req.params.id, updates);
     if (!updated) {
       return res.status(404).json({ message: "Student not found" });
     }

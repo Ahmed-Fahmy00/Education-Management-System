@@ -8,6 +8,7 @@ import {
   MessageSquare,
   LayoutDashboard,
   User,
+  Search,
   ChevronRight,
   ChevronDown,
   Menu,
@@ -22,6 +23,8 @@ import {
   Wrench,
 } from "lucide-react";
 import InstructorHome from "./InstructorHome";
+import { staffApi } from "../api/staff";
+import { studentApi } from "../api/students";
 import "../styles/home.css";
 
 /* ── helpers ──────────────────────────────────────────────────────────────── */
@@ -36,28 +39,121 @@ function timeAgo(dateStr) {
   return `${d}d ago`;
 }
 
+function matchesSearch(item, needle) {
+  if (!needle) return true;
+
+  const haystacks = [
+    item?.name,
+    item?.email,
+    item?.department,
+    item?.role,
+    item?.staffId,
+    item?.studentId,
+    item?.parentEmail,
+    item?.phone,
+    item?.officeLocation,
+    item?.firstName,
+    item?.lastName,
+  ];
+
+  return haystacks.some((value) =>
+    String(value || "").toLowerCase().includes(needle),
+  );
+}
+
 /* ── Shared layout ────────────────────────────────────────────────────────── */
 export function UserLayout({ children, user, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const isInstructor = user?.role === "instructor";
   const COURSES_PATHS = ["/course-requirements"];
   const [coursesOpen, setCoursesOpen] = useState(() =>
     COURSES_PATHS.includes(location.pathname),
   );
   const menuRef = useRef(null);
+  const searchRef = useRef(null);
 
   useEffect(() => {
     function handleClick(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMenuOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  useEffect(() => {
+    const query = searchTerm.trim();
+    const needle = query.toLowerCase();
+
+    if (query.length < 2) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const [staffRows, studentRows] = await Promise.allSettled([
+          staffApi.getProfiles({ q: query }),
+          studentApi.searchStudents(query),
+        ]);
+
+        if (!active) return;
+
+        const staffResults =
+          staffRows.status === "fulfilled" && Array.isArray(staffRows.value)
+            ? staffRows.value.map((item) => ({
+                ...item,
+                kind: "staff",
+                label: item._type === "profile" ? "Staff profile" : "Staff member",
+              }))
+            : [];
+
+        const studentResults =
+          studentRows.status === "fulfilled" && Array.isArray(studentRows.value)
+            ? studentRows.value.map((item) => ({
+                ...item,
+                kind: "student",
+                label: "Student",
+              }))
+            : [];
+
+        const filteredResults = [...staffResults, ...studentResults].filter((item) =>
+          matchesSearch(item, needle),
+        );
+
+        setSearchResults(filteredResults.slice(0, 8));
+        setSearchOpen(true);
+      } catch {
+        if (active) {
+          setSearchResults([]);
+          setSearchOpen(true);
+        }
+      } finally {
+        if (active) {
+          setSearchLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [searchTerm]);
 
   const initials = user.name
     .split(" ")
@@ -71,6 +167,17 @@ export function UserLayout({ children, user, onLogout }) {
   const navTo = (path) => {
     navigate(path);
     setSidebarOpen(false);
+  };
+
+  const openProfile = (result) => {
+    setSearchTerm("");
+    setSearchResults([]);
+    setSearchOpen(false);
+    navigate(
+      result.kind === "student"
+        ? `/profile/student/${result._id}`
+        : `/profile/staff/${result._id}`,
+    );
   };
 
   return (
@@ -201,10 +308,65 @@ export function UserLayout({ children, user, onLogout }) {
             {location.pathname === "/course-requirements" && "Courses"}
             {location.pathname === "/rooms" && "Room Booking"}
             {location.pathname === "/maintenance" && "Maintenance"}
-            {location.pathname === "/profile" && "Profile"}
+            {location.pathname.startsWith("/profile") && "Profile"}
             {location.pathname === "/announcements" && "Announcements"}
             {location.pathname === "/chats" && "Chats"}
           </span>
+
+          <div className="hs-topbar-search" ref={searchRef}>
+            <div className="hs-topbar-search-input">
+              <Search size={16} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => {
+                  if (searchTerm.trim().length >= 2) {
+                    setSearchOpen(true);
+                  }
+                }}
+                placeholder="Search staff or students"
+                aria-label="Search profiles"
+              />
+              {searchLoading && <Loader2 size={14} className="hs-spin" />}
+            </div>
+
+            {searchOpen && searchTerm.trim().length >= 2 && (
+              <div className="hs-topbar-search-results">
+                {searchResults.length === 0 ? (
+                  <div className="hs-topbar-search-empty">
+                    No matching profiles found.
+                  </div>
+                ) : (
+                  searchResults.map((result) => (
+                    <button
+                      key={`${result.kind}-${result._id}`}
+                      type="button"
+                      className="hs-topbar-search-result"
+                      onClick={() => openProfile(result)}
+                    >
+                      <div className="hs-topbar-search-avatar">
+                        {(result.name || "?")
+                          .split(" ")
+                          .slice(0, 2)
+                          .map((part) => part[0])
+                          .join("")
+                          .toUpperCase()}
+                      </div>
+                      <div className="hs-topbar-search-copy">
+                        <strong>{result.name || "Unnamed profile"}</strong>
+                        <span>
+                          {result.label}
+                          {result.department ? ` · ${result.department}` : ""}
+                        </span>
+                      </div>
+                      <ChevronRight size={14} />
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="hs-topbar-right" ref={menuRef}>
             {/* Bell icon → announcements */}
