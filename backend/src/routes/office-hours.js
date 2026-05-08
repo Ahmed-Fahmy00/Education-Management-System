@@ -1,15 +1,29 @@
 const express = require("express");
-const controller = require("../controllers/office-hours");
+const router = express.Router();
+const {
+  createOfficeHour,
+  getOfficeHoursByStaff,
+  deleteOfficeHour,
+} = require("../controllers/officeHourController");
 const { attachUser, requireRole } = require("../middleware/auth");
 
-const router = express.Router();
-
-router.use(attachUser);
-router.get("/", controller.listOfficeHours);
+// POST /api/office-hours -> Add new slot (Professor/TA only)
 router.post(
   "/",
-  requireRole(["professor", "ta"]),
-  controller.publishOfficeHour,
+  attachUser,
+  requireRole(["professor", "TA", "instructor"]),
+  createOfficeHour
+);
+
+// GET /api/office-hours/:staffId -> Return all slots + computed status
+router.get("/:staffId", getOfficeHoursByStaff);
+
+// DELETE /api/office-hours/:id -> Delete slot (owner only)
+router.delete(
+  "/:id",
+  attachUser,
+  requireRole(["professor", "TA", "instructor"]),
+  deleteOfficeHour
 );
 
 module.exports = router;
