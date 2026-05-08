@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   RefreshCw,
@@ -374,8 +374,8 @@ function StudentDetail({ student, onBack, onEdit }) {
       setLoading(true);
       try {
         const [rData, tData] = await Promise.allSettled([
-          apiFetch(`/api/registrations?student=${student._id}`),
-          apiFetch(`/api/transcripts/${student._id}`),
+          apiFetch(`/api/registrations?student=${student._id}`).then(res => res.json()),
+          apiFetch(`/api/transcripts/${student._id}`).then(res => res.json()),
         ]);
 
         setRegistrations(
@@ -404,12 +404,13 @@ function StudentDetail({ student, onBack, onEdit }) {
   const handleGenerateTranscript = async () => {
     setGenerating(true);
     try {
-      const updatedTranscript = await apiFetch(
+      const res = await apiFetch(
         `/api/transcripts/${student._id}/generate`,
         {
           method: "POST",
         },
       );
+      const updatedTranscript = await res.json();
       setTranscript(updatedTranscript);
     } catch (err) {
       console.error("Failed to generate transcript", err);
@@ -732,7 +733,8 @@ export default function Students({ onSubtitle }) {
       const url = q
         ? `/api/students?q=${encodeURIComponent(q)}`
         : "/api/students";
-      const data = await apiFetch(url);
+      const res = await apiFetch(url);
+      const data = await res.json();
       setAllItems(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e.message || "Failed to load students");
