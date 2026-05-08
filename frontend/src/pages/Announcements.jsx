@@ -1,7 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Clock, Megaphone, Loader2, RefreshCw } from "lucide-react";
+import { Bell, Clock, Megaphone, Loader2, RefreshCw, Trash2, Pencil } from "lucide-react";
 import { UserLayout } from "./Home";
+import { deleteAnnouncement } from "../api/announcements";
+import AnnouncementModal from "../components/AnnouncementModal";
 import "../styles/home.css";
 
 function timeAgo(dateStr) {
@@ -20,6 +22,8 @@ export default function Announcements() {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
+  const [editTarget, setEditTarget] = useState(null); // holds the announcement being edited
 
   const [user] = useState(() => {
     try {
@@ -28,6 +32,8 @@ export default function Announcements() {
       return null;
     }
   });
+
+  const isInstructor = user?.role === "instructor";
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -42,9 +48,7 @@ export default function Announcements() {
       const res = await fetch("/api/announcements");
       const data = await res.json();
       const sorted = Array.isArray(data)
-        ? [...data].sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-          )
+        ? [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         : [];
       setAnnouncements(sorted);
     } catch {
@@ -57,6 +61,19 @@ export default function Announcements() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this announcement?")) return;
+    setDeletingId(id);
+    try {
+      await deleteAnnouncement(id);
+      setAnnouncements((prev) => prev.filter((a) => a._id !== id));
+    } catch {
+      setError("Failed to delete announcement.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (!user) return <div className="home-loading">No user data</div>;
 
@@ -102,16 +119,42 @@ export default function Announcements() {
                 <div className="ann-page-item-body">
                   <div className="ann-page-item-header">
                     <span className="ann-page-item-title">{a.title}</span>
-                    <span className="ann-page-item-time">
-                      <Clock size={11} /> {timeAgo(a.createdAt)}
-                    </span>
+                    <div className="ann-page-item-header-right">
+                      <span className="ann-page-item-time">
+                        <Clock size={11} /> {timeAgo(a.createdAt)}
+                      </span>
+                      {isInstructor && (
+                        <div className="ann-page-item-actions">
+                          <button
+                            className="ann-action-btn ann-edit-btn"
+                            onClick={() => setEditTarget(a)}
+                            title="Edit announcement"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            className="ann-action-btn ann-delete-btn"
+                            onClick={() => handleDelete(a._id)}
+                            disabled={deletingId === a._id}
+                            title="Delete announcement"
+                          >
+                            {deletingId === a._id
+                              ? <Loader2 size={13} className="hs-spin" />
+                              : <Trash2 size={13} />
+                            }
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <p className="ann-page-item-text">{a.body}</p>
                   <div className="ann-page-item-footer">
                     <span className="ann-page-course">
                       {a.course?.code ?? "General"}
                     </span>
-                    <span className="ann-page-by">by {a.postedBy}</span>
+                    <span className="ann-page-by">
+                      Professor {a.instructor?.name || "Unknown"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -119,6 +162,18 @@ export default function Announcements() {
           </div>
         )}
       </div>
+
+      {/* Edit modal — only mounts when an announcement is targeted */}
+      {editTarget && (
+        <AnnouncementModal
+          mode="edit"
+          isOpen={true}
+          announcement={editTarget}
+          courses={[]}         // pass your courses array here if available
+          onSuccess={load}
+          onClose={() => setEditTarget(null)}
+        />
+      )}
     </UserLayout>
   );
 }

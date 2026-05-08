@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.use(attachUser);
 router.get("/", controller.listRegistrations);
+router.get("/course/:courseId/students", controller.getStudentsInCourse);
 router.post("/", requireRole(["student", "admin"]), controller.registerStudent);
 router.patch(
   "/:id",

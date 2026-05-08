@@ -1,4 +1,5 @@
 const registrationsService = require("../services/registrations");
+const mongoose = require("mongoose");
 
 async function registerStudent(req, res, next) {
   try {
@@ -29,6 +30,19 @@ async function listRegistrations(req, res, next) {
   }
 }
 
+async function getStudentsInCourse(req, res, next) {
+  try {
+    const { courseId } = req.params;
+    if (!courseId || !mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: "Valid course ID is required" });
+    }
+    const students = await registrationsService.getStudentsInCourse(courseId);
+    res.json(students);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function updateRegistration(req, res, next) {
   try {
     const updated = await registrationsService.updateRegistration(
@@ -44,4 +58,4 @@ async function updateRegistration(req, res, next) {
   }
 }
 
-module.exports = { registerStudent, listRegistrations, updateRegistration };
+module.exports = { registerStudent, listRegistrations, getStudentsInCourse, updateRegistration };

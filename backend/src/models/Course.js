@@ -16,7 +16,10 @@ const courseSchema = new mongoose.Schema(
     department: { type: String, required: true, trim: true },
     prerequisites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }],
     capacity: { type: Number, min: 1, default: 80 },
-    instructorName: { type: String, trim: true },
+    instructorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Staff",
+    },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true },

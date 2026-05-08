@@ -13,7 +13,7 @@ async function createCourse(req, res, next) {
       description,
       credits,
       type,
-      instructorName,
+      instructorId,
       capacity,
       prerequisites,
       isActive,
@@ -39,7 +39,7 @@ async function createCourse(req, res, next) {
       description: description?.trim() || "",
       credits: Number(credits) || 3,
       type: type || "core",
-      instructorName: instructorName?.trim() || "",
+      instructorId: instructorId || null,
       capacity: Number(capacity) || 80,
       prerequisites: Array.isArray(prerequisites) ? prerequisites : [],
       isActive: isActive !== false,
@@ -135,6 +135,19 @@ async function getCourse(req, res, next) {
   }
 }
 
+async function getCoursesByInstructorId(req, res, next) {
+  try {
+    const instructorId = req.params.instructorId;
+    if (!instructorId || !mongoose.Types.ObjectId.isValid(instructorId)) {
+      return res.status(400).json({ message: "Valid instructor ID is required." });
+    }
+    const courses = await coursesService.getCoursesByInstructorId(instructorId);
+    res.json(courses);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function updateCourse(req, res, next) {
   try {
     const body = req.body || {};
@@ -145,7 +158,7 @@ async function updateCourse(req, res, next) {
       description,
       credits,
       type,
-      instructorName,
+      instructorId,
       capacity,
       prerequisites,
       isActive,
@@ -171,8 +184,8 @@ async function updateCourse(req, res, next) {
     if (description !== undefined) payload.description = description.trim();
     if (credits !== undefined) payload.credits = Number(credits);
     if (type !== undefined) payload.type = type;
-    if (instructorName !== undefined)
-      payload.instructorName = instructorName.trim();
+    if (instructorId !== undefined)
+      payload.instructorId = instructorId || null;
     if (capacity !== undefined) payload.capacity = Number(capacity);
     if (prerequisites !== undefined)
       payload.prerequisites = Array.isArray(prerequisites) ? prerequisites : [];
@@ -205,6 +218,7 @@ module.exports = {
   listCourses,
   listStudentRequirements,
   getCourse,
+  getCoursesByInstructorId,
   updateCourse,
   deleteCourse,
 };
