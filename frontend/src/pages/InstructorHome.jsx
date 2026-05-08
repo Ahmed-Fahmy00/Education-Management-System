@@ -112,6 +112,7 @@ export default function InstructorHome({ user }) {
       </div>
 
       <AnnouncementModal
+        mode={"create"}
         isOpen={showAnnouncementModal}
         onClose={() => setShowAnnouncementModal(false)}
         courses={courses}

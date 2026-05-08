@@ -28,7 +28,7 @@ export default function CourseStudentsModal({ isOpen, onClose, course }) {
   };
 
   if (!isOpen || !course) return null;
-
+  console.log("students in course", students[0]);
   return (
     <div className="course-students-overlay" onClick={onClose}>
       <div className="course-students-modal" onClick={(e) => e.stopPropagation()}>
@@ -64,7 +64,6 @@ export default function CourseStudentsModal({ isOpen, onClose, course }) {
           ) : (
             <div className="students-list">
               <div className="students-table-header">
-                <div className="col-id">Student ID</div>
                 <div className="col-name">Name</div>
                 <div className="col-email">Email</div>
                 <div className="col-department">Department</div>
@@ -74,9 +73,8 @@ export default function CourseStudentsModal({ isOpen, onClose, course }) {
                   const student = registration.student;
                   return (
                     <div key={index} className="student-row">
-                      <div className="col-id">{student.studentId || 'N/A'}</div>
                       <div className="col-name">
-                        {student.firstName} {student.lastName}
+                      {student.name}
                       </div>
                       <div className="col-email">{student.email}</div>
                       <div className="col-department">{student.department || 'N/A'}</div>

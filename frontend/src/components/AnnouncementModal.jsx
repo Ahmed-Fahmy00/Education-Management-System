@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { createAnnouncement } from '../api/announcements';
+import { createAnnouncement, updateAnnouncement } from '../api/announcements';
 import '../styles/announcement-modal.css';
 
-export default function AnnouncementModal({ isOpen, onClose, courses, onSuccess }) {
+export default function AnnouncementModal({ mode = 'create', isOpen, onClose, courses, announcement, onSuccess }) {
   const [formData, setFormData] = useState({
-    type: 'general',
-    title: '',
-    body: '',
-    course: '',
+    type: announcement?.type || 'general',
+    title: announcement?.title || '',
+    body: announcement?.body || '',
+    course: announcement?.course?._id || announcement?.course || '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const isEditMode = mode === 'edit';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,18 +55,17 @@ export default function AnnouncementModal({ isOpen, onClose, courses, onSuccess 
         payload.course = formData.course;
       }
 
-      await createAnnouncement(payload);
-      
-      setFormData({
-        type: 'general',
-        title: '',
-        body: '',
-        course: '',
-      });
+      if (isEditMode) {
+        await updateAnnouncement(announcement._id, payload);
+      } else {
+        await createAnnouncement(payload);
+      }
+
+      setFormData({ type: 'general', title: '', body: '', course: '' });
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to create announcement');
+      setError(err.message || `Failed to ${isEditMode ? 'update' : 'create'} announcement`);
     } finally {
       setLoading(false);
     }
@@ -76,7 +77,7 @@ export default function AnnouncementModal({ isOpen, onClose, courses, onSuccess 
     <div className="announcement-modal-overlay" onClick={onClose}>
       <div className="announcement-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="announcement-modal-header">
-          <h2>Create Announcement</h2>
+          <h2>{isEditMode ? 'Edit' : 'Create'} Announcement</h2>
           <button className="announcement-modal-close" onClick={onClose}>
             <X size={20} />
           </button>
@@ -87,36 +88,66 @@ export default function AnnouncementModal({ isOpen, onClose, courses, onSuccess 
 
           <div className="form-group">
             <label htmlFor="type">Announcement Type</label>
-            <select
-              id="type"
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="general">General</option>
-              <option value="course">Course Specific</option>
-            </select>
+            {isEditMode ? (
+              // In edit mode, show type as read-only text
+              <input
+                id="type"
+                name="type"
+                type="text"
+                value={formData.type === 'course' ? 'Course Specific' : 'General'}
+                className="input"
+                disabled
+              />
+            ) : (
+              <select
+                id="type"
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="general">General</option>
+                <option value="course">Course Specific</option>
+              </select>
+            )}
           </div>
 
           {formData.type === 'course' && (
             <div className="form-group">
-              <label htmlFor="course">Select Course</label>
-              <select
-                id="course"
-                name="course"
-                value={formData.course}
-                onChange={handleChange}
-                className="input"
-                required
-              >
-                <option value="">-- Select a course --</option>
-                {courses.map((course) => (
-                  <option key={course._id} value={course._id}>
-                    {course.code} - {course.title}
-                  </option>
-                ))}
-              </select>
+              <label htmlFor="course">Course</label>
+              {isEditMode ? (
+                // In edit mode, show course name as read-only text
+                <input
+                  id="course"
+                  name="course"
+                  type="text"
+                  value={
+                    announcement?.course?.code && announcement?.course?.title
+                      ? `${announcement.course.code} - ${announcement.course.title}`
+                      : courses.find((c) => c._id === formData.course)
+                        ? `${courses.find((c) => c._id === formData.course).code} - ${courses.find((c) => c._id === formData.course).title}`
+                        : 'Unknown Course'
+                  }
+                  className="input"
+                  disabled
+                />
+              ) : (
+                <select
+                  id="course"
+                  name="course"
+                  value={formData.course}
+                  onChange={handleChange}
+                  className="input"
+                  required
+                >
+                  <option value="">-- Select a course --</option>
+                  {courses.map((course) => (
+                    <option key={course._id} value={course._id}>
+                      {course.code} - {course.title}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
 
@@ -149,20 +180,14 @@ export default function AnnouncementModal({ isOpen, onClose, courses, onSuccess 
           </div>
 
           <div className="announcement-modal-actions">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={onClose}
-              disabled={loading}
-            >
+            <button type="button" className="btn-secondary" onClick={onClose} disabled={loading}>
               Cancel
             </button>
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={loading}
-            >
-              {loading ? 'Creating...' : 'Create Announcement'}
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading
+                ? isEditMode ? 'Updating...' : 'Creating...'
+                : isEditMode ? 'Update Announcement' : 'Create Announcement'
+              }
             </button>
           </div>
         </form>
