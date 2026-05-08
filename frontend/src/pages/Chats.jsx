@@ -47,29 +47,23 @@ export default function Chats() {
       console.log("Connected to socket server");
     });
 
-    socket.on("receive_message", (message) => {
-      console.log("Received message:", message);
-      setSelectedChat((prev) => {
-        if (!prev) return prev;
-        
-        // Check if this message is for the current chat
-        const isForCurrentChat = 
-          (message.senderName === prev.name) || 
-          (message.receiverName === prev.name);
-        
-        if (isForCurrentChat) {
-          // Avoid duplicates if message is from current user
-          const isDuplicate = prev.messages.some(m => m._id === message._id);
-          if (!isDuplicate && message.senderName !== currentUser.name) {
-            return {
-              ...prev,
-              messages: [...prev.messages, message],
-            };
-          }
-        }
-        return prev;
-      });
+  socket.on("receive_message", (message) => {
+    setSelectedChat((prev) => {
+      if (!prev) return prev;
+
+      // Only handle messages FROM the other person in the current chat
+      if (message.senderName !== prev.name) return prev;
+
+      // Avoid duplicates
+      const isDuplicate = prev.messages.some(m => m._id === message._id);
+      if (isDuplicate) return prev;
+
+      return {
+        ...prev,
+        messages: [...prev.messages, message],
+      };
     });
+  });
 
     socketRef.current = socket;
 
