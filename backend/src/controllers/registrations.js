@@ -61,4 +61,36 @@ async function updateRegistration(req, res, next) {
   }
 }
 
-module.exports = { registerStudent, listRegistrations, getStudentsInCourse, updateRegistration };
+async function updateGrade(req, res, next) {
+  try {
+    const { grade, status } = req.body;
+
+    if (grade !== undefined && !registrationsService.VALID_GRADES.includes(grade)) {
+      return res.status(400).json({ message: `Invalid grade. Allowed: ${registrationsService.VALID_GRADES.join(", ")}` });
+    }
+
+    if (req.user.role === "instructor") {
+      const registration = await registrationsService.getRegistrationById(req.params.id);
+      if (!registration) {
+        return res.status(404).json({ message: "Registration not found" });
+      }
+      const assigned = await registrationsService.isInstructorAssignedToCourse(
+        req.user.id,
+        registration.course,
+      );
+      if (!assigned) {
+        return res.status(403).json({ message: "You are not assigned to this course" });
+      }
+    }
+
+    const updated = await registrationsService.updateGrade(req.params.id, { grade, status });
+    if (!updated) {
+      return res.status(404).json({ message: "Registration not found" });
+    }
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { registerStudent, listRegistrations, getStudentsInCourse, updateRegistration, updateGrade };

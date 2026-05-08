@@ -19,9 +19,19 @@ import {
   Calendar,
   FileText,
   Printer,
+  Save,
 } from "lucide-react";
 import { apiFetch, Badge, Spinner, EmptyState } from "./shared";
 import TranscriptDocument from "./TranscriptDocument";
+import { updateRegistrationGrade } from "../../api/registrations";
+
+const VALID_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"];
+const GRADE_COLORS = {
+  "A+": "#10b981", A: "#10b981", "A-": "#34d399",
+  "B+": "#3b82f6", B: "#3b82f6", "B-": "#60a5fa",
+  "C+": "#f59e0b", C: "#f59e0b", "C-": "#fbbf24",
+  "D+": "#f97316", D: "#f97316", F: "#ef4444",
+};
 
 /* ── Shared department list (matches Courses.jsx) ───────────────────────── */
 const DEPARTMENTS = [
@@ -362,12 +372,86 @@ function DeleteConfirm({ student, onClose, onDeleted }) {
   );
 }
 
+function GradeCell({ registration, onSaved }) {
+  const [editing, setEditing] = useState(false);
+  const [selected, setSelected] = useState(registration.grade || "");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      await updateRegistrationGrade(registration._id, {
+        grade: selected,
+        status: "completed",
+      });
+      onSaved(registration._id, selected, "completed");
+      setEditing(false);
+    } catch (err) {
+      alert(err.message || "Failed to save grade");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!editing) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ fontWeight: 600, color: GRADE_COLORS[registration.grade] || "var(--text-tertiary)" }}>
+          {registration.grade || "—"}
+        </span>
+        <button
+          title="Edit grade"
+          onClick={() => { setSelected(registration.grade || ""); setEditing(true); }}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--text-tertiary)", display: "flex", alignItems: "center" }}
+        >
+          <Pencil size={12} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <select
+        value={selected}
+        onChange={(e) => setSelected(e.target.value)}
+        style={{
+          fontSize: 12, padding: "2px 4px", borderRadius: 4,
+          border: "1px solid var(--border-color)", background: "var(--bg-secondary)",
+          color: "var(--text-primary)",
+        }}
+        autoFocus
+      >
+        <option value="">— Select —</option>
+        {VALID_GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
+      </select>
+      <button
+        onClick={handleSave}
+        disabled={saving || !selected}
+        title="Save"
+        style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--accent-primary)", display: "flex", alignItems: "center" }}
+      >
+        {saving ? <Spinner size={12} /> : <Save size={12} />}
+      </button>
+      <button
+        onClick={() => setEditing(false)}
+        title="Cancel"
+        style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--text-tertiary)", display: "flex", alignItems: "center" }}
+      >
+        <X size={12} />
+      </button>
+    </div>
+  );
+}
+
 function StudentDetail({ student, onBack, onEdit }) {
   const [registrations, setRegistrations] = useState([]);
   const [transcript, setTranscript] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [showTranscriptModal, setShowTranscriptModal] = useState(false);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -401,6 +485,14 @@ function StudentDetail({ student, onBack, onEdit }) {
         .join("")
         .toUpperCase()
     : "?";
+
+  function handleGradeSaved(registrationId, grade, status) {
+    setRegistrations((prev) =>
+      prev.map((r) => r._id === registrationId ? { ...r, grade, status } : r),
+    );
+    setToast({ message: "Grade saved successfully!", type: "success" });
+  }
+
   const handleGenerateTranscript = async () => {
     setGenerating(true);
     try {
@@ -410,10 +502,15 @@ function StudentDetail({ student, onBack, onEdit }) {
           method: "POST",
         },
       );
+      if (!res.ok) {
+        throw new Error("Failed to generate transcript");
+      }
       const updatedTranscript = await res.json();
       setTranscript(updatedTranscript);
+      setToast({ message: "Transcript updated successfully!", type: "success" });
     } catch (err) {
       console.error("Failed to generate transcript", err);
+      setToast({ message: err.message || "Failed to update transcript", type: "error" });
     } finally {
       setGenerating(false);
     }
@@ -421,6 +518,13 @@ function StudentDetail({ student, onBack, onEdit }) {
 
   return (
     <>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDone={() => setToast(null)}
+        />
+      )}
       <div className="page-header">
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button className="btn btn-secondary btn-sm" onClick={onBack}>
@@ -597,7 +701,9 @@ function StudentDetail({ student, onBack, onEdit }) {
                       <td style={{ color: "var(--text-secondary)" }}>
                         {r.semester}
                       </td>
-                      <td>{r.grade || "—"}</td>
+                      <td>
+                        <GradeCell registration={r} onSaved={handleGradeSaved} />
+                      </td>
                       <td>
                         <Badge
                           variant={

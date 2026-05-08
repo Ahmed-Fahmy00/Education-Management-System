@@ -1,5 +1,8 @@
 const Course = require("../models/Course");
 const CourseRegistration = require("../models/CourseRegistration");
+const Assignment = require("../models/Assignment");
+
+const VALID_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"];
 
 // Max credits a student may enroll per semester (business rule).
 const MAX_CREDITS_PER_SEMESTER = 18;
@@ -88,4 +91,32 @@ function updateRegistration(id, payload) {
   });
 }
 
-module.exports = { registerStudent, listRegistrations, getStudentsInCourse, updateRegistration };
+function getRegistrationById(id) {
+  return CourseRegistration.findById(id);
+}
+
+async function isInstructorAssignedToCourse(staffId, courseId) {
+  const assignment = await Assignment.findOne({ staffId, courseId });
+  return !!assignment;
+}
+
+function updateGrade(id, { grade, status }) {
+  const payload = {};
+  if (grade !== undefined) payload.grade = grade;
+  if (status !== undefined) payload.status = status;
+  return CourseRegistration.findByIdAndUpdate(id, payload, {
+    new: true,
+    runValidators: true,
+  });
+}
+
+module.exports = {
+  registerStudent,
+  listRegistrations,
+  getStudentsInCourse,
+  updateRegistration,
+  getRegistrationById,
+  isInstructorAssignedToCourse,
+  updateGrade,
+  VALID_GRADES,
+};

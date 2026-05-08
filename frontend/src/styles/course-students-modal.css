@@ -125,7 +125,7 @@
 
 .students-table-header {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 2fr 1.5fr;
+  grid-template-columns: 1.2fr 1.8fr 2fr;
   gap: 16px;
   padding: 12px 16px;
   background: #f9fafb;
@@ -138,6 +138,10 @@
   top: 0;
 }
 
+.students-table-header.with-grade {
+  grid-template-columns: 1.2fr 1.8fr 2fr 1fr;
+}
+
 .students-table-body {
   display: flex;
   flex-direction: column;
@@ -147,13 +151,17 @@
 
 .student-row {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 2fr 1.5fr;
+  grid-template-columns: 1.2fr 1.8fr 2fr;
   gap: 16px;
   padding: 12px 16px;
   border-bottom: 1px solid #e5e7eb;
   font-size: 0.875rem;
   color: #374151;
   align-items: center;
+}
+
+.student-row.with-grade {
+  grid-template-columns: 1.2fr 1.8fr 2fr 1fr;
 }
 
 .student-row:last-child {
@@ -173,9 +181,15 @@
   white-space: nowrap;
 }
 
+.col-grade {
+  min-width: 80px;
+}
+
 @media (max-width: 768px) {
   .students-table-header,
-  .student-row {
+  .students-table-header.with-grade,
+  .student-row,
+  .student-row.with-grade {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
   }

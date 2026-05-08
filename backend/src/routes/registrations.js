@@ -13,5 +13,10 @@ router.patch(
   requireRole(["student", "admin"]),
   controller.updateRegistration,
 );
+router.patch(
+  "/:id/grade",
+  requireRole(["admin", "instructor"]),
+  controller.updateGrade,
+);
 
 module.exports = router;
