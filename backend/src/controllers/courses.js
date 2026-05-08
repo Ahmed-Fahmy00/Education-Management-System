@@ -1,8 +1,49 @@
+const mongoose = require("mongoose");
 const coursesService = require("../services/courses");
+const registrationsService = require("../services/registrations");
+const studentsService = require("../services/students");
 
 async function createCourse(req, res, next) {
   try {
-    const created = await coursesService.createCourse(req.body);
+    const body = req.body || {};
+    const {
+      code,
+      title,
+      department,
+      description,
+      credits,
+      type,
+      instructorName,
+      capacity,
+      prerequisites,
+      isActive,
+    } = body;
+
+    // Validate required fields
+    if (!code || !code.trim()) {
+      return res.status(400).json({ message: "Course code is required." });
+    }
+    if (!title || !title.trim()) {
+      return res.status(400).json({ message: "Course title is required." });
+    }
+    if (!department || !department.trim()) {
+      return res
+        .status(400)
+        .json({ message: "Course department is required." });
+    }
+
+    const created = await coursesService.createCourse({
+      code: code.toUpperCase().trim(),
+      title: title.trim(),
+      department: department.trim(),
+      description: description?.trim() || "",
+      credits: Number(credits) || 3,
+      type: type || "core",
+      instructorName: instructorName?.trim() || "",
+      capacity: Number(capacity) || 80,
+      prerequisites: Array.isArray(prerequisites) ? prerequisites : [],
+      isActive: isActive !== false,
+    });
     res.status(201).json(created);
   } catch (err) {
     next(err);
@@ -24,12 +65,59 @@ async function listCourses(req, res, next) {
 
 async function listStudentRequirements(req, res, next) {
   try {
-    const { department } = req.query;
-    const query = department ? { department } : {};
+    const requestedDepartment = req.query.department?.trim();
+    let department = requestedDepartment || req.user?.department?.trim() || "";
+
+    if (
+      !department &&
+      req.user?.id &&
+      mongoose.Types.ObjectId.isValid(req.user.id)
+    ) {
+      const student = await studentsService.getStudentById(req.user.id);
+      department = student?.department?.trim() || "";
+    }
+
+    const query = { isActive: true };
+    if (department) {
+      query.department = department;
+    }
+
     const courses = await coursesService.listCourses(query);
     const core = courses.filter((course) => course.type === "core");
     const electives = courses.filter((course) => course.type === "elective");
-    res.json({ core, electives });
+
+    let requiredCore = core;
+
+    if (
+      department &&
+      req.user?.id &&
+      mongoose.Types.ObjectId.isValid(req.user.id)
+    ) {
+      const completedRegistrations =
+        await registrationsService.listRegistrations({
+          student: req.user.id,
+          status: "completed",
+        });
+
+      const completedCourseIds = new Set(
+        completedRegistrations
+          .map(
+            (registration) => registration.course?._id || registration.course,
+          )
+          .filter(Boolean)
+          .map((courseId) => courseId.toString()),
+      );
+
+      requiredCore = core.filter(
+        (course) => !completedCourseIds.has(course._id.toString()),
+      );
+    }
+
+    res.json({
+      core: requiredCore,
+      electives,
+      department: department || null,
+    });
   } catch (err) {
     next(err);
   }
@@ -49,7 +137,48 @@ async function getCourse(req, res, next) {
 
 async function updateCourse(req, res, next) {
   try {
-    const updated = await coursesService.updateCourse(req.params.id, req.body);
+    const body = req.body || {};
+    const {
+      code,
+      title,
+      department,
+      description,
+      credits,
+      type,
+      instructorName,
+      capacity,
+      prerequisites,
+      isActive,
+    } = body;
+
+    // Validate required fields
+    if (code && !code.trim()) {
+      return res.status(400).json({ message: "Course code cannot be empty." });
+    }
+    if (title && !title.trim()) {
+      return res.status(400).json({ message: "Course title cannot be empty." });
+    }
+    if (department && !department.trim()) {
+      return res
+        .status(400)
+        .json({ message: "Course department cannot be empty." });
+    }
+
+    const payload = {};
+    if (code !== undefined) payload.code = code.toUpperCase().trim();
+    if (title !== undefined) payload.title = title.trim();
+    if (department !== undefined) payload.department = department.trim();
+    if (description !== undefined) payload.description = description.trim();
+    if (credits !== undefined) payload.credits = Number(credits);
+    if (type !== undefined) payload.type = type;
+    if (instructorName !== undefined)
+      payload.instructorName = instructorName.trim();
+    if (capacity !== undefined) payload.capacity = Number(capacity);
+    if (prerequisites !== undefined)
+      payload.prerequisites = Array.isArray(prerequisites) ? prerequisites : [];
+    if (isActive !== undefined) payload.isActive = isActive;
+
+    const updated = await coursesService.updateCourse(req.params.id, payload);
     if (!updated) {
       return res.status(404).json({ message: "Course not found" });
     }

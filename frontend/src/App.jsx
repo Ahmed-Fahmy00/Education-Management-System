@@ -2,7 +2,13 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Application from "./pages/Application";
 import Home from "./pages/Home";
-import Admin from "./pages/Admin";
+import Admin from "./pages/admin/Admin";
+import Profile from "./pages/Profile";
+import Announcements from "./pages/Announcements";
+import CourseRequirements from "./pages/CourseRequirements";
+import Rooms from "./pages/Rooms";
+import Chats from "./pages/Chats";
+import Forum from "./pages/Forum";
 import "./App.css";
 
 function getStoredUser() {
@@ -85,10 +91,58 @@ export default function App() {
           }
         />
         <Route
-          path="/admin"
+          path="/profile"
+          element={
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/announcements"
+          element={
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <Announcements />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chats"
+          element={
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <Chats />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/forums"
+          element={
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <Forum />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/course-requirements"
+          element={
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <CourseRequirements />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/*"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rooms"
+          element={
+            <ProtectedRoute allowedRoles={[]}>
+              <Rooms />
             </ProtectedRoute>
           }
         />

@@ -1,0 +1,324 @@
+.course-requirements-page {
+  min-height: 100vh;
+  padding: 1.25rem;
+  background:
+    radial-gradient(circle at top left, rgba(13, 110, 253, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(255, 193, 7, 0.12), transparent 24%),
+    linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
+  color: #122033;
+}
+
+.course-requirements-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: #4b5563;
+  background: #f7faff;
+}
+
+.course-requirements-hero,
+.course-requirements-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.course-requirements-hero {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1rem 0 2rem;
+}
+
+.back-button,
+.refresh-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(18, 32, 51, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #122033;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.back-button {
+  width: fit-content;
+  padding: 0.7rem 1rem;
+}
+
+.refresh-button {
+  padding: 0.8rem 1rem;
+}
+
+.back-button:hover,
+.refresh-button:hover {
+  transform: translateY(-1px);
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+.refresh-button:disabled {
+  cursor: progress;
+  opacity: 0.7;
+  transform: none;
+}
+
+.hero-copy {
+  max-width: 780px;
+  padding: 2rem;
+  border: 1px solid rgba(18, 32, 51, 0.08);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 22px 60px rgba(13, 37, 72, 0.09);
+  backdrop-filter: blur(18px);
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: 999px;
+  background: #e6f0ff;
+  color: #0d6efd;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-copy h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.9rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.hero-copy p {
+  margin: 1rem 0 0;
+  max-width: 64ch;
+  color: #556173;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.hero-stats article {
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(18, 32, 51, 0.08);
+  box-shadow: 0 12px 30px rgba(13, 37, 72, 0.06);
+}
+
+.hero-stats span {
+  display: block;
+  color: #667085;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hero-stats strong {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 1.2rem;
+  color: #122033;
+}
+
+.course-requirements-shell {
+  padding-bottom: 2rem;
+}
+
+.course-requirements-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-kicker {
+  margin: 0;
+  color: #0d6efd;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.course-requirements-toolbar h2 {
+  margin: 0.3rem 0 0;
+  font-size: 1.55rem;
+}
+
+.requirements-alert,
+.requirements-empty {
+  padding: 1rem 1.2rem;
+  margin-bottom: 1rem;
+  border-radius: 16px;
+}
+
+.requirements-alert {
+  background: #fff1f2;
+  color: #9f1239;
+  border: 1px solid #fecdd3;
+}
+
+.requirements-empty {
+  background: rgba(255, 255, 255, 0.8);
+  color: #4b5563;
+  border: 1px solid rgba(18, 32, 51, 0.08);
+}
+
+.requirements-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.requirements-card {
+  padding: 1.5rem;
+  border-radius: 24px;
+  border: 1px solid rgba(18, 32, 51, 0.08);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 16px 42px rgba(13, 37, 72, 0.08);
+}
+
+.requirements-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.requirements-icon-wrap {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.requirements-icon-wrap.core {
+  background: #e6f0ff;
+  color: #0d6efd;
+}
+
+.requirements-icon-wrap.elective {
+  background: #fff4e6;
+  color: #b45309;
+}
+
+.requirements-label {
+  display: block;
+  color: #667085;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.2rem;
+}
+
+.requirements-card h3 {
+  margin: 0;
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.requirements-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.requirements-item,
+.requirements-empty-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(18, 32, 51, 0.08);
+  background: linear-gradient(180deg, rgba(247, 250, 255, 0.96), rgba(241, 245, 249, 0.96));
+}
+
+.requirements-item strong,
+.requirements-item span {
+  display: block;
+}
+
+.requirements-item strong {
+  color: #122033;
+  font-size: 0.97rem;
+}
+
+.requirements-item span {
+  color: #667085;
+  font-size: 0.9rem;
+  margin-top: 0.15rem;
+}
+
+.requirements-item svg {
+  color: #0d6efd;
+  flex: 0 0 auto;
+}
+
+.requirements-empty-item {
+  color: #667085;
+  justify-content: flex-start;
+}
+
+@media (max-width: 900px) {
+  .hero-stats,
+  .requirements-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .course-requirements-toolbar {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .course-requirements-page {
+    padding: 0.9rem;
+  }
+
+  .hero-copy,
+  .requirements-card {
+    padding: 1.1rem;
+    border-radius: 20px;
+  }
+
+  .hero-copy h1 {
+    font-size: 1.9rem;
+  }
+}
+
+/* Enroll button used in requirements list */
+.cr-enroll-btn {
+  border: 0;
+  background: #0d6efd;
+  color: white;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cr-enroll-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

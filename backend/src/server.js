@@ -2,11 +2,13 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
 
 const { connectDB } = require("./config/db");
 const apiRoutes = require("./routes");
 const { notFound } = require("./middleware/notFound");
 const { errorHandler } = require("./middleware/errorHandler");
+const { initSocket } = require("./utils/socket");
 
 function createApp() {
   const app = express();
@@ -37,6 +39,19 @@ function createApp() {
 async function start() {
   const port = Number(process.env.PORT) || 8000;
   const app = createApp();
+  
+  // Create HTTP server with Socket.IO
+  const httpServer = http.createServer(app);
+  const corsOriginEnv = process.env.CORS_ORIGIN;
+  const corsOrigin = corsOriginEnv
+    ? corsOriginEnv
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    : "*";
+  
+  // Initialize Socket.IO
+  initSocket(httpServer, corsOrigin);
 
   const mongoUri = process.env.MONGO_URI;
   if (mongoUri) {
@@ -51,7 +66,7 @@ async function start() {
     }
   }
 
-  app.listen(port, () => {
+  httpServer.listen(port, () => {
     console.log(`Backend running on http://localhost:${port}`);
   });
 }

@@ -39,4 +39,40 @@ async function listOutbox(req, res, next) {
   }
 }
 
-module.exports = { sendMessage, listInbox, listOutbox };
+async function listAllChats(req, res, next) {
+  try {
+    const { user } = req.query;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = parseInt(req.query.skip) || 0;
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "user query parameter is required" });
+    }
+
+    const rows = await messagesService.listAllChats(user, limit, skip);
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getConversation(req, res, next) {
+  try {
+    const { user, otherUser } = req.query;
+
+    if (!user || !otherUser) {
+      return res.status(400).json({
+        message: "user and otherUser query parameters are required",
+      });
+    }
+
+    const rows = await messagesService.getConversation(user, otherUser);
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { sendMessage, listInbox, listOutbox, listAllChats, getConversation };

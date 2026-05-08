@@ -16,12 +16,5 @@ router.use(rateLimiter(100, 15 * 60 * 1000));
 // attachUser is used on all routes to detect user context
 router.use(attachUser);
 
-// Publicly readable (but context-aware)
-router.get("/", getProfiles);
-router.get("/:id", getProfileById);
-
-// Protected actions
-router.post("/", createProfile);
-router.put("/:id", updateProfile);
 
 module.exports = router;
