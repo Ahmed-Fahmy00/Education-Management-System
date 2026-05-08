@@ -1411,3 +1411,48 @@
     padding: 7px 10px;
   }
 }
+
+/* Header right side: time + action buttons aligned in a row */
+.ann-page-item-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ann-page-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ann-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  background: transparent;
+}
+
+.ann-edit-btn {
+  color: var(--color-primary, #6366f1);
+}
+.ann-edit-btn:hover {
+  background: color-mix(in srgb, var(--color-primary, #6366f1) 12%, transparent);
+}
+
+.ann-delete-btn {
+  color: #ef4444;
+}
+.ann-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.ann-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

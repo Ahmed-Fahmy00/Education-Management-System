@@ -20,6 +20,7 @@ import {
   Loader2,
   CalendarDays,
 } from "lucide-react";
+import InstructorHome from "./InstructorHome";
 import "../styles/home.css";
 
 /* ── helpers ──────────────────────────────────────────────────────────────── */
@@ -40,6 +41,7 @@ export function UserLayout({ children, user, onLogout }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const isInstructor = user?.role === "instructor";
   const COURSES_PATHS = ["/course-requirements"];
   const [coursesOpen, setCoursesOpen] = useState(() =>
     COURSES_PATHS.includes(location.pathname),
@@ -98,39 +100,43 @@ export function UserLayout({ children, user, onLogout }) {
             <span>Dashboard</span>
           </button>
 
-          {/* Courses (expandable) */}
-          <button
-            className={`hs-nav-item ${COURSES_PATHS.includes(location.pathname) ? "hs-nav-item-parent-active" : ""}`}
-            onClick={() => setCoursesOpen((o) => !o)}
-          >
-            <BookOpen size={20} />
-            <span>Courses</span>
-            <ChevronDown
-              size={14}
-              style={{
-                marginLeft: "auto",
-                transform: coursesOpen ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 0.2s",
-                opacity: 0.5,
-              }}
-            />
-          </button>
-
-          {coursesOpen && (
-            <div className="hs-subnav">
+          {/* Courses (expandable) — hidden for instructors */}
+          {!isInstructor && (
+            <>
               <button
-                className={`hs-subnav-item ${isActive("/course-requirements") ? "active" : ""}`}
-                onClick={() => navTo("/course-requirements")}
+                className={`hs-nav-item ${COURSES_PATHS.includes(location.pathname) ? "hs-nav-item-parent-active" : ""}`}
+                onClick={() => setCoursesOpen((o) => !o)}
               >
-                <BookOpen size={15} />
-                My Courses
+                <BookOpen size={20} />
+                <span>Courses</span>
+                <ChevronDown
+                  size={14}
+                  style={{
+                    marginLeft: "auto",
+                    transform: coursesOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s",
+                    opacity: 0.5,
+                  }}
+                />
               </button>
-              <button className="hs-subnav-item disabled" title="Coming soon">
-                <FileText size={15} />
-                Register Courses
-                <span className="hs-nav-soon">Soon</span>
-              </button>
-            </div>
+
+              {coursesOpen && (
+                <div className="hs-subnav">
+                  <button
+                    className={`hs-subnav-item ${isActive("/course-requirements") ? "active" : ""}`}
+                    onClick={() => navTo("/course-requirements")}
+                  >
+                    <BookOpen size={15} />
+                    My Courses
+                  </button>
+                  <button className="hs-subnav-item disabled" title="Coming soon">
+                    <FileText size={15} />
+                    Register Courses
+                    <span className="hs-nav-soon">Soon</span>
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {/* Room Booking */}
@@ -142,12 +148,14 @@ export function UserLayout({ children, user, onLogout }) {
             <span>Room Booking</span>
           </button>
 
-          {/* Calendar */}
-          <button className="hs-nav-item disabled" title="Coming soon">
-            <CalendarDays size={20} />
-            <span>Calendar</span>
-            <span className="hs-nav-soon">Soon</span>
-          </button>
+          {/* Calendar — hidden for instructors */}
+          {!isInstructor && (
+            <button className="hs-nav-item disabled" title="Coming soon">
+              <CalendarDays size={20} />
+              <span>Calendar</span>
+              <span className="hs-nav-soon">Soon</span>
+            </button>
+          )}
 
           {/* Chats */}
           <button
@@ -313,6 +321,14 @@ export default function Home() {
 
   if (!user) return <div className="home-loading">No user data</div>;
 
+  // Show instructor home for instructor users
+  if (user.role === "instructor") {
+    return (
+      <UserLayout user={user} onLogout={handleLogout}>
+        <InstructorHome user={user} />
+      </UserLayout>
+    );
+  }
   return (
     <UserLayout user={user} onLogout={handleLogout}>
       <div className="hs-home-grid">
