@@ -5,13 +5,13 @@ const messageSchema = new mongoose.Schema(
     senderName: { type: String, required: true, trim: true },
     senderRole: {
       type: String,
-      enum: ["student", "parent", "professor", "ta"],
+      enum: ["student", "instructor", "admin", "parent", "professor", "ta"],
       required: true,
     },
     receiverName: { type: String, required: true, trim: true },
     receiverRole: {
       type: String,
-      enum: ["student", "parent", "professor", "ta"],
+      enum: ["student", "instructor", "admin", "parent", "professor", "ta"],
       required: true,
     },
     subject: { type: String, trim: true },

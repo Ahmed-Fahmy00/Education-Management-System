@@ -26,8 +26,12 @@ async function listProfiles(query = {}) {
       _type: "profile",
     })),
     ...approvedStaff.map((s) => ({
-      ...s.toObject(),
-      name: s.name, // Ensure 'name' field is present
+      _id: s._id,
+      name: s.name,
+      email: s.email,
+      department: s.department,
+      role: s.role,
+      staffId: s.staffId,
       _type: "staff",
     })),
   ];

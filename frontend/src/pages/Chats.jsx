@@ -77,6 +77,21 @@ export default function Chats() {
     loadInitialData();
   }, []);
 
+  // Auto-refresh recent chats every 2 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const chatsRes = await getAllChats(currentUser.name, 10, 0);
+        const chats = Array.isArray(chatsRes) ? chatsRes : [];
+        setRecentChats(chats);
+      } catch (error) {
+        console.error("Error refreshing chats:", error);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [currentUser.name]);
+
   const loadInitialData = useCallback(async () => {
     setLoading(true);
     try {
