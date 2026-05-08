@@ -6,6 +6,7 @@ import Admin from "./pages/admin/Admin";
 import Profile from "./pages/Profile";
 import Announcements from "./pages/Announcements";
 import CourseRequirements from "./pages/CourseRequirements";
+import RegisterCourses from "./pages/RegisterCourses";
 import Rooms from "./pages/Rooms";
 import Chats from "./pages/Chats";
 import Forum from "./pages/Forum";
@@ -76,6 +77,7 @@ export default function App() {
         <Route path="/chats" element={ <ProtectedRoute allowedRoles={["student", "instructor"]}> <Chats /> </ProtectedRoute> } />
         <Route path="/forums" element={ <ProtectedRoute allowedRoles={["student", "instructor"]}> <Forum /> </ProtectedRoute> } />
         <Route path="/course-requirements" element={ <ProtectedRoute allowedRoles={["student", "instructor"]}> <CourseRequirements /> </ProtectedRoute> } />
+        <Route path="/register-courses" element={ <ProtectedRoute allowedRoles={["student", "instructor"]}> <RegisterCourses /> </ProtectedRoute> } />
         <Route path="/admin/*" element={ <ProtectedRoute allowedRoles={["admin"]}> <Admin /> </ProtectedRoute> } />
         <Route path="/rooms" element={ <ProtectedRoute allowedRoles={[]}> <Rooms /> </ProtectedRoute> } />
         <Route path="/maintenance" element={ <ProtectedRoute allowedRoles={[]}> <Maintenance /> </ProtectedRoute> } />

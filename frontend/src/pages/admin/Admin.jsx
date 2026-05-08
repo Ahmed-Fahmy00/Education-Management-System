@@ -13,7 +13,6 @@ import {
   X,
   ChevronDown,
   CalendarDays,
-  ExternalLink,
   Clock,
 } from "lucide-react";
 
@@ -95,9 +94,8 @@ export default function Admin() {
             return null;
           }
         };
-        const [sData, stData, cData, rData, aData, bData, mData] = await Promise.all(
-          results.map(parse),
-        );
+        const [sData, stData, cData, rData, aData, bData, mData] =
+          await Promise.all(results.map(parse));
         const pending = aData?.applications?.length ?? 0;
         setPendingCount(pending);
         setPendingBookingCount(Array.isArray(bData) ? bData.length : 0);
@@ -256,15 +254,6 @@ export default function Admin() {
             {openMaintenanceCount > 0 && (
               <span className="nav-badge">{openMaintenanceCount}</span>
             )}
-          </button>
-
-          {/* Book a Room — opens user-facing room booking page */}
-          <button
-            className="nav-item"
-            onClick={() => navigate("/rooms")}
-          >
-            <ExternalLink size={18} />
-            <span>Book a Room</span>
           </button>
 
           {/* Booking Requests */}

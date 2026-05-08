@@ -2,6 +2,18 @@ const Course = require("../models/Course");
 const CourseRegistration = require("../models/CourseRegistration");
 
 async function registerStudent({ student, course, semester }) {
+  const existingRegistration = await CourseRegistration.findOne({
+    student,
+    course,
+    semester,
+  });
+
+  if (existingRegistration) {
+    throw new Error(
+      "You are already enrolled in this course for this semester",
+    );
+  }
+
   const targetCourse = await Course.findById(course);
   if (!targetCourse || !targetCourse.isActive) {
     throw new Error("Course not available");
@@ -55,4 +67,22 @@ function updateRegistration(id, payload) {
   });
 }
 
-module.exports = { registerStudent, listRegistrations, getStudentsInCourse, updateRegistration };
+async function completeCourse(courseId) {
+  // Mark all enrolled registrations for this course as completed
+  await CourseRegistration.updateMany(
+    { course: courseId, status: "enrolled" },
+    { status: "completed" },
+  );
+  return CourseRegistration.find({ course: courseId }).populate(
+    "student",
+    "studentId name email department",
+  );
+}
+
+module.exports = {
+  registerStudent,
+  listRegistrations,
+  getStudentsInCourse,
+  updateRegistration,
+  completeCourse,
+};

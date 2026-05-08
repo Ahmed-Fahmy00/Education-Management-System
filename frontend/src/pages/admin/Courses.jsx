@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Users,
-  BarChart2,
   ArrowLeft,
   Search,
 } from "lucide-react";
@@ -59,16 +58,28 @@ const GRADE_COLORS = {
 };
 
 /* ── Instructor search input ──────────────────────────────────────────────── */
+// value = selected instructor _id (or ""), displayValue = name shown in input
 function InstructorSearch({ value, onChange, staffList = [] }) {
+  const [inputText, setInputText] = useState("");
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+
+  // Sync display text when value (id) changes externally
+  useEffect(() => {
+    if (!value) {
+      setInputText("");
+      return;
+    }
+    const found = (staffList || []).find((s) => s._id === value);
+    if (found) setInputText(found.name || "");
+  }, [value, staffList]);
 
   const filtered = (staffList || []).filter(
     (s) =>
       s &&
       s.role === "instructor" &&
       s.name &&
-      s.name.toLowerCase().includes(value.toLowerCase()),
+      s.name.toLowerCase().includes(inputText.toLowerCase()),
   );
 
   useEffect(() => {
@@ -84,9 +95,11 @@ function InstructorSearch({ value, onChange, staffList = [] }) {
       <input
         className="modal-input"
         placeholder="Search instructors…"
-        value={value}
+        value={inputText}
         onChange={(e) => {
-          onChange(e.target.value);
+          setInputText(e.target.value);
+          // If user clears the field, clear the selection
+          if (!e.target.value) onChange("");
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
@@ -99,7 +112,8 @@ function InstructorSearch({ value, onChange, staffList = [] }) {
               key={s._id}
               className="instructor-option"
               onMouseDown={() => {
-                onChange(s.name);
+                onChange(s._id); // store the _id
+                setInputText(s.name);
                 setOpen(false);
               }}
             >
@@ -111,11 +125,9 @@ function InstructorSearch({ value, onChange, staffList = [] }) {
           ))}
         </ul>
       )}
-      {open && value && filtered.length === 0 && (
+      {open && inputText && filtered.length === 0 && (
         <ul className="instructor-dropdown">
-          <li className="instructor-option-empty">
-            No instructors found — you can still type a name
-          </li>
+          <li className="instructor-option-empty">No instructors found</li>
         </ul>
       )}
     </div>
@@ -276,7 +288,6 @@ const EMPTY = {
   type: "core",
   department: "",
   capacity: 80,
-  instructorName: "",
   instructorId: null,
   prerequisites: [],
   isActive: true,
@@ -300,8 +311,8 @@ function CourseModal({
           type: initial.type,
           department: initial.department,
           capacity: initial.capacity,
-          instructorName: initial.instructorId?.name || initial.instructorName || "",
-          instructorId: initial.instructorId?._id || initial.instructorId || null,
+          instructorId:
+            initial.instructorId?._id || initial.instructorId || null,
           prerequisites: initial.prerequisites || [],
           isActive: initial.isActive,
         }
@@ -512,18 +523,8 @@ function CourseModal({
             <div className="modal-field">
               <label className="modal-label">Instructor</label>
               <InstructorSearch
-                value={form.instructorName}
-                onChange={(v) => {
-                  // Find the instructor in staffList by name and set both name and ID
-                  const instructor = (staffList || []).find(
-                    (s) => s && s.name && s.name === v
-                  );
-                  setForm((f) => ({
-                    ...f,
-                    instructorName: v,
-                    instructorId: instructor ? instructor._id : null,
-                  }));
-                }}
+                value={form.instructorId || ""}
+                onChange={(id) => set("instructorId", id || null)}
                 staffList={staffList}
               />
             </div>
@@ -830,9 +831,9 @@ function CourseDetail({ course, onBack, onEdit, onDelete }) {
               <BookOpen size={12} /> {course.credits} credit
               {course.credits !== 1 ? "s" : ""}
             </span>
-            {(course.instructorId?.name || course.instructorName) && (
+            {course.instructorId?.name && (
               <span className="detail-hero-chip">
-                <Users size={12} /> {course.instructorId?.name || course.instructorName}
+                <Users size={12} /> {course.instructorId.name}
               </span>
             )}
             <span className="detail-hero-chip">
@@ -966,7 +967,7 @@ export default function Courses() {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     const statusText = c.isActive ? "active" : "inactive";
-    const instructorName = c.instructorId?.name || c.instructorName || "";
+    const instructorName = c.instructorId?.name || "";
     return (
       (c.code || "").toLowerCase().includes(q) ||
       (c.title || "").toLowerCase().includes(q) ||
@@ -1171,7 +1172,7 @@ export default function Courses() {
                       {c.department}
                     </td>
                     <td style={{ color: "var(--text-secondary)" }}>
-                      {c.instructorId?.name || c.instructorName || "—"}
+                      {c.instructorId?.name || "—"}
                     </td>
                     <td style={{ textAlign: "center" }}>{c.credits}</td>
                     <td>

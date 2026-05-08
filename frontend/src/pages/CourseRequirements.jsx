@@ -1,21 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
-  CheckCircle2,
-  ChevronRight,
   RefreshCw,
-  Sparkles,
-  Layers3,
+  CheckCircle2,
+  Clock,
+  GraduationCap,
+  Award,
 } from "lucide-react";
-import { getStudentCourseRequirements } from "../api/courses";
-import { registerStudentEnrollment } from "../api/registrations";
+import { listRegistrations } from "../api/registrations";
 import { UserLayout } from "./Home";
 import "../styles/course-requirements.css";
 
+function CourseAvatar({ code, variant = "default" }) {
+  const prefix = (code || "?").split("-")[0];
+  return (
+    <div className={`mycr-course-avatar mycr-avatar-${variant}`}>{prefix}</div>
+  );
+}
+
 export default function CourseRequirements() {
   const navigate = useNavigate();
-
   const [user] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "null");
@@ -24,81 +29,27 @@ export default function CourseRequirements() {
     }
   });
 
-  const [requirements, setRequirements] = useState({
-    core: [],
-    electives: [],
-    department: null,
-  });
+  const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [enrolling, setEnrolling] = useState(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    async function load() {
-      setError("");
-      try {
-        const data = await getStudentCourseRequirements();
-        if (!isMounted) return;
-        setRequirements({
-          core: data.core || [],
-          electives: data.electives || [],
-          department: data.department || null,
-        });
-      } catch (e) {
-        if (!isMounted) return;
-        setError(e?.message || "Unable to load course requirements");
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const handleRefresh = async () => {
+  const load = useCallback(async () => {
+    if (!user?.id) return;
     setLoading(true);
     setError("");
     try {
-      const data = await getStudentCourseRequirements();
-      setRequirements({
-        core: data.core || [],
-        electives: data.electives || [],
-        department: data.department || null,
-      });
+      const regs = await listRegistrations(`student=${user.id}`);
+      setRegistrations(Array.isArray(regs) ? regs : []);
     } catch (e) {
-      setError(e?.message || "Unable to load course requirements");
+      setError(e?.message || "Unable to load your courses");
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  function getCurrentSemester() {
-    // Simple semester id: YYYY-TERM
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const term = month >= 7 ? 'FALL' : month >= 1 && month <= 5 ? 'SPRING' : 'SUMMER'
-    return `${year}-${term}`
-  }
-
-  const handleEnroll = async (courseId) => {
-    if (!user?.id) return setError('No user available');
-    const semester = getCurrentSemester();
-    setEnrolling(courseId);
-    setError("");
-    try {
-      await registerStudentEnrollment({ student: user.id, course: courseId, semester });
-      // refresh requirements or show success
-      await handleRefresh();
-    } catch (e) {
-      setError(e?.message || 'Unable to enroll');
-    } finally {
-      setEnrolling(null);
-    }
-  }
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -108,133 +59,167 @@ export default function CourseRequirements() {
 
   if (!user) return <div className="home-loading">No user data</div>;
 
+  const inProgress = registrations.filter((r) => r.status === "enrolled");
+  const completed = registrations.filter((r) => r.status === "completed");
+
   return (
     <UserLayout user={user} onLogout={handleLogout}>
-      {/* Stats row */}
-      <div className="cr-stats-row">
-        <div className="cr-stat-card">
-          <div className="cr-stat-icon cr-stat-blue">
-            <Layers3 size={20} />
-          </div>
-          <div>
-            <div className="cr-stat-label">Core Subjects</div>
-            <div className="cr-stat-value">{requirements.core.length}</div>
-          </div>
+      {/* ── Header ── */}
+      <div className="mycr-header">
+        <div>
+          <h2 className="mycr-title">My Courses</h2>
+          <p className="mycr-subtitle">
+            {inProgress.length} in progress · {completed.length} completed
+          </p>
         </div>
-        <div className="cr-stat-card">
-          <div className="cr-stat-icon cr-stat-purple">
-            <Sparkles size={20} />
-          </div>
-          <div>
-            <div className="cr-stat-label">Available Electives</div>
-            <div className="cr-stat-value">{requirements.electives.length}</div>
-          </div>
-        </div>
-        <div className="cr-stat-card">
-          <div className="cr-stat-icon cr-stat-green">
-            <BookOpen size={20} />
-          </div>
-          <div>
-            <div className="cr-stat-label">Department</div>
-            <div className="cr-stat-value cr-stat-value-sm">
-              {requirements.department || user.department || "All"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="cr-toolbar">
-        <span className="cr-toolbar-label">Live catalog</span>
-        <button
-          className="cr-refresh-btn"
-          onClick={handleRefresh}
-          disabled={loading}
-        >
-          <RefreshCw size={14} /> Refresh
+        <button className="mycr-refresh-btn" onClick={load} disabled={loading}>
+          <RefreshCw size={14} className={loading ? "mycr-spin" : ""} />
+          Refresh
         </button>
       </div>
 
-      {error && <div className="cr-alert">{error}</div>}
+      {error && <div className="mycr-alert">{error}</div>}
 
       {loading ? (
-        <div className="cr-loading">Loading course options…</div>
+        <div className="mycr-loading">Loading your courses…</div>
       ) : (
-        <div className="cr-grid">
-          {/* Core */}
-          <div className="cr-card cr-card-core">
-            <div className="cr-card-header">
-              <div className="cr-icon-wrap cr-icon-blue">
-                <Layers3 size={18} />
-              </div>
-              <div>
-                <div className="cr-card-label">Core Subjects</div>
-                <div className="cr-card-count">{requirements.core.length}</div>
-              </div>
+        <>
+          {/* ── In Progress ── */}
+          <section className="mycr-section">
+            <div className="mycr-section-title">
+              <Clock size={14} />
+              <span>In Progress</span>
+              <span className="mycr-count">{inProgress.length}</span>
             </div>
-            <ul className="cr-list">
-              {requirements.core.length === 0 ? (
-                <li className="cr-empty-item">
-                  No active core subjects available.
-                </li>
-              ) : (
-                requirements.core.map((c) => (
-                  <li key={c._id} className="cr-item">
-                    <div>
-                      <strong>{c.code}</strong>
-                      <span>{c.title}</span>
-                    </div>
-                    <button
-                      className="cr-enroll-btn"
-                      onClick={() => handleEnroll(c._id)}
-                      disabled={enrolling && enrolling !== c._id}
-                    >
-                      {enrolling === c._id ? 'Enrolling…' : 'Enroll'}
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
 
-          {/* Electives */}
-          <div className="cr-card cr-card-elective">
-            <div className="cr-card-header">
-              <div className="cr-icon-wrap cr-icon-purple">
-                <Sparkles size={18} />
+            {inProgress.length === 0 ? (
+              <div className="mycr-empty">
+                <BookOpen size={28} style={{ opacity: 0.3 }} />
+                <p>
+                  No courses in progress. Go to{" "}
+                  <strong>Register Courses</strong> to enroll.
+                </p>
               </div>
-              <div>
-                <div className="cr-card-label">Available Electives</div>
-                <div className="cr-card-count">
-                  {requirements.electives.length}
-                </div>
+            ) : (
+              <div className="mycr-table-wrap">
+                <table className="mycr-table">
+                  <thead>
+                    <tr>
+                      <th>Course</th>
+                      <th>Department</th>
+                      <th>Credits</th>
+                      <th>Semester</th>
+                      <th>Instructor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inProgress.map((reg) => {
+                      const c = reg.course || {};
+                      return (
+                        <tr
+                          key={reg._id}
+                          className="mycr-row mycr-row-enrolled"
+                        >
+                          <td>
+                            <div className="mycr-course-cell">
+                              <CourseAvatar code={c.code} variant="enrolled" />
+                              <div>
+                                <div className="mycr-course-name">
+                                  {c.title || "—"}
+                                </div>
+                                <code className="mycr-course-code">
+                                  {c.code || "—"}
+                                </code>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="mycr-td-sec">{c.department || "—"}</td>
+                          <td className="mycr-td-center">{c.credits ?? "—"}</td>
+                          <td className="mycr-td-sec">{reg.semester}</td>
+                          <td className="mycr-td-sec">
+                            {c.instructorId?.name || c.instructorName || "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
+            )}
+          </section>
+
+          {/* ── Completed ── */}
+          <section className="mycr-section">
+            <div className="mycr-section-title">
+              <Award size={14} />
+              <span>Completed Courses</span>
+              <span className="mycr-count">{completed.length}</span>
             </div>
-            <ul className="cr-list">
-              {requirements.electives.length === 0 ? (
-                <li className="cr-empty-item">
-                  No active electives available right now.
-                </li>
-              ) : (
-                requirements.electives.map((c) => (
-                  <li key={c._id} className="cr-item">
-                    <div>
-                      <strong>{c.code}</strong>
-                      <span>{c.title}</span>
-                    </div>
-                    <button
-                      className="cr-enroll-btn"
-                      onClick={() => handleEnroll(c._id)}
-                      disabled={enrolling && enrolling !== c._id}
-                    >
-                      {enrolling === c._id ? 'Enrolling…' : 'Enroll'}
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
-        </div>
+
+            {completed.length === 0 ? (
+              <div className="mycr-empty">
+                <CheckCircle2
+                  size={28}
+                  style={{ opacity: 0.3, color: "#10b981" }}
+                />
+                <p>No completed courses yet.</p>
+              </div>
+            ) : (
+              <div className="mycr-table-wrap">
+                <table className="mycr-table">
+                  <thead>
+                    <tr>
+                      <th>Course</th>
+                      <th>Department</th>
+                      <th>Credits</th>
+                      <th>Semester</th>
+                      <th>Instructor</th>
+                      <th>Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {completed.map((reg) => {
+                      const c = reg.course || {};
+                      return (
+                        <tr
+                          key={reg._id}
+                          className="mycr-row mycr-row-completed"
+                        >
+                          <td>
+                            <div className="mycr-course-cell">
+                              <CourseAvatar code={c.code} variant="completed" />
+                              <div>
+                                <div className="mycr-course-name">
+                                  {c.title || "—"}
+                                </div>
+                                <code className="mycr-course-code">
+                                  {c.code || "—"}
+                                </code>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="mycr-td-sec">{c.department || "—"}</td>
+                          <td className="mycr-td-center">{c.credits ?? "—"}</td>
+                          <td className="mycr-td-sec">{reg.semester}</td>
+                          <td className="mycr-td-sec">
+                            {c.instructorId?.name || c.instructorName || "—"}
+                          </td>
+                          <td className="mycr-td-center">
+                            {reg.grade ? (
+                              <span className="mycr-grade">{reg.grade}</span>
+                            ) : (
+                              <span className="mycr-grade-empty">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        </>
       )}
     </UserLayout>
   );

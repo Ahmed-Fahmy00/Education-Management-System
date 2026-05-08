@@ -9,6 +9,16 @@ router.get("/", controller.listRegistrations);
 router.get("/course/:courseId/students", controller.getStudentsInCourse);
 router.post("/", requireRole(["student", "admin"]), controller.registerStudent);
 router.patch(
+  "/:id/grade",
+  requireRole(["instructor", "admin"]),
+  controller.gradeStudent,
+);
+router.post(
+  "/course/:courseId/complete",
+  requireRole(["instructor", "admin"]),
+  controller.completeCourse,
+);
+router.patch(
   "/:id",
   requireRole(["student", "admin"]),
   controller.updateRegistration,
