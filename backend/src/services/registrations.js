@@ -8,6 +8,18 @@ const VALID_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "
 const MAX_CREDITS_PER_SEMESTER = 18;
 
 async function registerStudent({ student, course, semester }) {
+  const existingRegistration = await CourseRegistration.findOne({
+    student,
+    course,
+    semester,
+  });
+
+  if (existingRegistration) {
+    throw new Error(
+      "You are already enrolled in this course for this semester",
+    );
+  }
+
   const targetCourse = await Course.findById(course);
   if (!targetCourse || !targetCourse.isActive) {
     throw new Error("Course not available");
@@ -91,23 +103,16 @@ function updateRegistration(id, payload) {
   });
 }
 
-function getRegistrationById(id) {
-  return CourseRegistration.findById(id);
-}
-
-async function isInstructorAssignedToCourse(staffId, courseId) {
-  const assignment = await Assignment.findOne({ staffId, courseId });
-  return !!assignment;
-}
-
-function updateGrade(id, { grade, status }) {
-  const payload = {};
-  if (grade !== undefined) payload.grade = grade;
-  if (status !== undefined) payload.status = status;
-  return CourseRegistration.findByIdAndUpdate(id, payload, {
-    new: true,
-    runValidators: true,
-  });
+async function completeCourse(courseId) {
+  // Mark all enrolled registrations for this course as completed
+  await CourseRegistration.updateMany(
+    { course: courseId, status: "enrolled" },
+    { status: "completed" },
+  );
+  return CourseRegistration.find({ course: courseId }).populate(
+    "student",
+    "studentId name email department",
+  );
 }
 
 module.exports = {
@@ -115,8 +120,5 @@ module.exports = {
   listRegistrations,
   getStudentsInCourse,
   updateRegistration,
-  getRegistrationById,
-  isInstructorAssignedToCourse,
-  updateGrade,
-  VALID_GRADES,
+  completeCourse,
 };

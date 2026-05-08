@@ -93,14 +93,14 @@ async function listStudentRequirements(req, res, next) {
       req.user?.id &&
       mongoose.Types.ObjectId.isValid(req.user.id)
     ) {
-      const completedRegistrations =
+      const takenRegistrations =
         await registrationsService.listRegistrations({
           student: req.user.id,
-          status: "completed",
+          status: { $in: ["enrolled", "completed"] },
         });
 
       const completedCourseIds = new Set(
-        completedRegistrations
+        takenRegistrations
           .map(
             (registration) => registration.course?._id || registration.course,
           )

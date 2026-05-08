@@ -1,317 +1,331 @@
-.course-requirements-page {
-  min-height: 100vh;
-  padding: 1.25rem;
-  background:
-    radial-gradient(circle at top left, rgba(13, 110, 253, 0.16), transparent 28%),
-    radial-gradient(circle at top right, rgba(255, 193, 7, 0.12), transparent 24%),
-    linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
-  color: #122033;
-}
+/* ── My Courses page ─────────────────────────────────────────────────────── */
 
-.course-requirements-loading {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  color: #4b5563;
-  background: #f7faff;
-}
-
-.course-requirements-hero,
-.course-requirements-shell {
-  max-width: 1120px;
-  margin: 0 auto;
-}
-
-.course-requirements-hero {
-  display: grid;
-  gap: 1.25rem;
-  padding: 1rem 0 2rem;
-}
-
-.back-button,
-.refresh-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 1px solid rgba(18, 32, 51, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #122033;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease;
-}
-
-.back-button {
-  width: fit-content;
-  padding: 0.7rem 1rem;
-}
-
-.refresh-button {
-  padding: 0.8rem 1rem;
-}
-
-.back-button:hover,
-.refresh-button:hover {
-  transform: translateY(-1px);
-  border-color: #0d6efd;
-  color: #0d6efd;
-}
-
-.refresh-button:disabled {
-  cursor: progress;
-  opacity: 0.7;
-  transform: none;
-}
-
-.hero-copy {
-  max-width: 780px;
-  padding: 2rem;
-  border: 1px solid rgba(18, 32, 51, 0.08);
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 22px 60px rgba(13, 37, 72, 0.09);
-  backdrop-filter: blur(18px);
-}
-
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.35rem 0.75rem;
-  margin-bottom: 1rem;
-  border-radius: 999px;
-  background: #e6f0ff;
-  color: #0d6efd;
-  font-size: 0.8rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.hero-copy h1 {
-  margin: 0;
-  font-size: clamp(2rem, 4vw, 3.9rem);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
-}
-
-.hero-copy p {
-  margin: 1rem 0 0;
-  max-width: 64ch;
-  color: #556173;
-  font-size: 1rem;
-  line-height: 1.7;
-}
-
-.hero-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.hero-stats article {
-  padding: 1rem 1.1rem;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(18, 32, 51, 0.08);
-  box-shadow: 0 12px 30px rgba(13, 37, 72, 0.06);
-}
-
-.hero-stats span {
-  display: block;
-  color: #667085;
-  font-size: 0.84rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.hero-stats strong {
-  display: block;
-  margin-top: 0.4rem;
-  font-size: 1.2rem;
-  color: #122033;
-}
-
-.course-requirements-shell {
-  padding-bottom: 2rem;
-}
-
-.course-requirements-toolbar {
+/* Header */
+.mycr-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
 }
 
-.section-kicker {
+.mycr-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+
+.mycr-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary, #475569);
   margin: 0;
-  color: #0d6efd;
-  font-size: 0.8rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
-.course-requirements-toolbar h2 {
-  margin: 0.3rem 0 0;
-  font-size: 1.55rem;
+.mycr-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-primary, #0f172a);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.mycr-refresh-btn:hover:not(:disabled) {
+  background: var(--bg-tertiary, #f1f5f9);
+}
+.mycr-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.requirements-alert,
-.requirements-empty {
-  padding: 1rem 1.2rem;
-  margin-bottom: 1rem;
-  border-radius: 16px;
-}
-
-.requirements-alert {
+/* Alert */
+.mycr-alert {
+  padding: 12px 16px;
   background: #fff1f2;
   color: #9f1239;
   border: 1px solid #fecdd3;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 20px;
 }
 
-.requirements-empty {
-  background: rgba(255, 255, 255, 0.8);
-  color: #4b5563;
-  border: 1px solid rgba(18, 32, 51, 0.08);
+/* Loading */
+.mycr-loading {
+  padding: 48px;
+  text-align: center;
+  color: var(--text-secondary, #475569);
+  font-size: 14px;
 }
 
-.requirements-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.25rem;
+/* Spinner */
+.mycr-spin {
+  animation: mycr-spin-anim 0.8s linear infinite;
+}
+@keyframes mycr-spin-anim {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.requirements-card {
-  padding: 1.5rem;
-  border-radius: 24px;
-  border: 1px solid rgba(18, 32, 51, 0.08);
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 16px 42px rgba(13, 37, 72, 0.08);
+/* ── Sections ────────────────────────────────────────────────────────────── */
+.mycr-section {
+  margin-bottom: 28px;
 }
 
-.requirements-card-header {
+.mycr-section-title {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 1rem;
-}
-
-.requirements-icon-wrap {
-  width: 46px;
-  height: 46px;
-  border-radius: 15px;
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-}
-
-.requirements-icon-wrap.core {
-  background: #e6f0ff;
-  color: #0d6efd;
-}
-
-.requirements-icon-wrap.elective {
-  background: #fff4e6;
-  color: #b45309;
-}
-
-.requirements-label {
-  display: block;
-  color: #667085;
-  font-size: 0.8rem;
-  font-weight: 800;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 0.2rem;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
 }
 
-.requirements-card h3 {
-  margin: 0;
-  font-size: 1.9rem;
-  line-height: 1;
+.mycr-count {
+  margin-left: auto;
+  background: var(--bg-tertiary, #f1f5f9);
+  color: var(--text-secondary, #475569);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, #e2e8f0);
 }
 
-.requirements-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 0.8rem;
+/* Sub-section label (core / elective) */
+.mycr-subsection {
+  margin-bottom: 16px;
 }
 
-.requirements-item,
-.requirements-empty-item {
-  display: flex;
-  justify-content: space-between;
+.mycr-subsection-label {
+  display: inline-flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.95rem 1rem;
-  border-radius: 16px;
-  border: 1px solid rgba(18, 32, 51, 0.08);
-  background: linear-gradient(180deg, rgba(247, 250, 255, 0.96), rgba(241, 245, 249, 0.96));
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.08);
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+.mycr-subsection-elective {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.1);
 }
 
-.requirements-item strong,
-.requirements-item span {
-  display: block;
+/* Empty state */
+.mycr-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 24px;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  color: var(--text-secondary, #475569);
+  text-align: center;
+}
+.mycr-empty p {
+  margin: 0;
+  font-size: 14px;
 }
 
-.requirements-item strong {
-  color: #122033;
-  font-size: 0.97rem;
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.mycr-table-wrap {
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.requirements-item span {
-  color: #667085;
-  font-size: 0.9rem;
-  margin-top: 0.15rem;
+.mycr-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.requirements-item svg {
-  color: #0d6efd;
-  flex: 0 0 auto;
+.mycr-table thead {
+  background: var(--bg-secondary, #f8fafc);
 }
 
-.requirements-empty-item {
-  color: #667085;
-  justify-content: flex-start;
+.mycr-table th {
+  padding: 11px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary, #475569);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  white-space: nowrap;
 }
 
-@media (max-width: 900px) {
-  .hero-stats,
-  .requirements-grid {
-    grid-template-columns: 1fr;
-  }
+.mycr-table td {
+  padding: 13px 16px;
+  font-size: 14px;
+  color: var(--text-primary, #0f172a);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  vertical-align: middle;
+}
 
-  .course-requirements-toolbar {
+.mycr-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.mycr-row {
+  transition: background 0.1s;
+}
+.mycr-row:hover {
+  background: var(--bg-secondary, #f8fafc);
+}
+
+/* Highlight enrolled rows subtly */
+.mycr-row-enrolled {
+  background: rgba(59, 130, 246, 0.02);
+}
+.mycr-row-completed {
+  background: rgba(16, 185, 129, 0.02);
+}
+
+/* ── Course cell ─────────────────────────────────────────────────────────── */
+.mycr-course-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mycr-course-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mycr-avatar-core {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+.mycr-avatar-elective {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.mycr-course-name {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.mycr-course-code {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--text-secondary, #475569);
+  background: var(--bg-tertiary, #f1f5f9);
+  padding: 1px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+/* Utility cells */
+.mycr-td-sec {
+  color: var(--text-secondary, #475569);
+  font-size: 13px;
+}
+.mycr-td-center {
+  text-align: center;
+}
+.mycr-td-action {
+  text-align: right;
+}
+
+/* Grade */
+.mycr-grade {
+  font-weight: 700;
+  font-size: 15px;
+  color: #047857;
+}
+.mycr-grade-empty {
+  color: var(--text-tertiary, #94a3b8);
+}
+
+/* ── Enroll button ───────────────────────────────────────────────────────── */
+.mycr-enroll-btn {
+  padding: 6px 14px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.15s;
+  white-space: nowrap;
+}
+.mycr-enroll-btn:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+.mycr-enroll-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mycr-enroll-btn-elective {
+  background: #f59e0b;
+}
+.mycr-enroll-btn-elective:hover:not(:disabled) {
+  background: #d97706;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .mycr-header {
     flex-direction: column;
+    align-items: stretch;
   }
+  .mycr-table th:nth-child(4),
+  .mycr-table td:nth-child(4) {
+    display: none;
+  } /* hide Capacity on mobile */
 }
 
-@media (max-width: 640px) {
-  .course-requirements-page {
-    padding: 0.9rem;
-  }
-
-  .hero-copy,
-  .requirements-card {
-    padding: 1.1rem;
-    border-radius: 20px;
-  }
-
-  .hero-copy h1 {
-    font-size: 1.9rem;
-  }
+@media (max-width: 540px) {
+  .mycr-table th:nth-child(3),
+  .mycr-table td:nth-child(3) {
+    display: none;
+  } /* hide Credits on small */
 }
 
-/* Enroll button used in requirements list */
+/* ── Legacy classes kept for backward compat ─────────────────────────────── */
 .cr-enroll-btn {
   border: 0;
-  background: #0d6efd;
+  background: #3b82f6;
   color: white;
   padding: 0.45rem 0.75rem;
   border-radius: 8px;
@@ -321,4 +335,109 @@
 .cr-enroll-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+/* ── Avatar variants ─────────────────────────────────────────────────────── */
+.mycr-avatar-enrolled {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+.mycr-avatar-completed {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+.mycr-avatar-core {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+.mycr-avatar-elective {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+/* ── Elective section title tint ─────────────────────────────────────────── */
+.mycr-section-title-elective {
+  color: #b45309;
+}
+.mycr-section-title-elective .mycr-count {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* ── Leave button ────────────────────────────────────────────────────────── */
+.mycr-leave-btn {
+  padding: 6px 14px;
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid rgba(190, 18, 60, 0.2);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.15s;
+  white-space: nowrap;
+}
+.mycr-leave-btn:hover:not(:disabled) {
+  background: #ffe4e6;
+  transform: translateY(-1px);
+}
+.mycr-leave-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Completed tag (non-interactive) ─────────────────────────────────────── */
+.mycr-completed-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #047857;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Search bar in Register Courses header ───────────────────────────────── */
+.mycr-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  padding: 7px 12px;
+  color: var(--text-secondary, #475569);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.mycr-search-wrap:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.mycr-search-input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--text-primary, #0f172a);
+  width: 220px;
+}
+.mycr-search-input::placeholder {
+  color: var(--text-tertiary, #94a3b8);
+}
+.mycr-search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary, #94a3b8);
+  display: flex;
+  padding: 0;
+}
+.mycr-search-clear:hover {
+  color: var(--text-secondary, #475569);
+}
+
+@media (max-width: 640px) {
+  .mycr-search-input {
+    width: 140px;
+  }
 }

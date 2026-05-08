@@ -1,4 +1,5 @@
 const registrationsService = require("../services/registrations");
+const transcriptsService = require("../services/transcripts");
 const mongoose = require("mongoose");
 
 async function registerStudent(req, res, next) {
@@ -10,9 +11,8 @@ async function registerStudent(req, res, next) {
       err.message === "Course not available" ||
       err.message === "Course capacity reached" ||
       err.message === "Prerequisites not satisfied" ||
-      err.message === "Already enrolled in this course for the semester" ||
-      err.message === "Course already completed" ||
-      err.message === "Exceeds maximum allowed credits for the semester"
+      err.message ===
+        "You are already enrolled in this course for this semester"
     ) {
       return res.status(400).json({ message: err.message });
     }
@@ -48,6 +48,18 @@ async function getStudentsInCourse(req, res, next) {
 
 async function updateRegistration(req, res, next) {
   try {
+    // Fetch the current registration to check its status
+    const CourseRegistration = require("../models/CourseRegistration");
+    const existing = await CourseRegistration.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ message: "Registration not found" });
+    }
+    // Block dropping a completed registration
+    if (existing.status === "completed" && req.body.status === "dropped") {
+      return res
+        .status(400)
+        .json({ message: "Cannot drop a completed course" });
+    }
     const updated = await registrationsService.updateRegistration(
       req.params.id,
       req.body,
@@ -61,29 +73,42 @@ async function updateRegistration(req, res, next) {
   }
 }
 
-async function updateGrade(req, res, next) {
+async function completeCourse(req, res, next) {
   try {
-    const { grade, status } = req.body;
-
-    if (grade !== undefined && !registrationsService.VALID_GRADES.includes(grade)) {
-      return res.status(400).json({ message: `Invalid grade. Allowed: ${registrationsService.VALID_GRADES.join(", ")}` });
+    const { courseId } = req.params;
+    if (!courseId || !mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: "Valid course ID is required" });
     }
+    const registrations = await registrationsService.completeCourse(courseId);
 
-    if (req.user.role === "instructor") {
-      const registration = await registrationsService.getRegistrationById(req.params.id);
-      if (!registration) {
-        return res.status(404).json({ message: "Registration not found" });
-      }
-      const assigned = await registrationsService.isInstructorAssignedToCourse(
-        req.user.id,
-        registration.course,
-      );
-      if (!assigned) {
-        return res.status(403).json({ message: "You are not assigned to this course" });
-      }
+    // Auto-generate transcripts for all affected students
+    const studentIds = [
+      ...new Set(
+        registrations
+          .filter((r) => r.student?._id)
+          .map((r) => r.student._id.toString()),
+      ),
+    ];
+    await Promise.allSettled(
+      studentIds.map((sid) => transcriptsService.generateTranscript(sid)),
+    );
+
+    res.json({ message: "Course completed", count: registrations.length });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function gradeStudent(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { grade } = req.body;
+    if (!grade) {
+      return res.status(400).json({ message: "Grade is required" });
     }
-
-    const updated = await registrationsService.updateGrade(req.params.id, { grade, status });
+    const updated = await registrationsService.updateRegistration(id, {
+      grade,
+    });
     if (!updated) {
       return res.status(404).json({ message: "Registration not found" });
     }
@@ -93,4 +118,11 @@ async function updateGrade(req, res, next) {
   }
 }
 
-module.exports = { registerStudent, listRegistrations, getStudentsInCourse, updateRegistration, updateGrade };
+module.exports = {
+  registerStudent,
+  listRegistrations,
+  getStudentsInCourse,
+  updateRegistration,
+  completeCourse,
+  gradeStudent,
+};

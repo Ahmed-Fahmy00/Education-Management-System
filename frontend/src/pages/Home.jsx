@@ -72,7 +72,7 @@ export function UserLayout({ children, user, onLogout }) {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const isInstructor = user?.role === "instructor";
-  const COURSES_PATHS = ["/course-requirements"];
+  const COURSES_PATHS = ["/course-requirements", "/register-courses"];
   const [coursesOpen, setCoursesOpen] = useState(() =>
     COURSES_PATHS.includes(location.pathname),
   );
@@ -237,10 +237,12 @@ export function UserLayout({ children, user, onLogout }) {
                     <BookOpen size={15} />
                     My Courses
                   </button>
-                  <button className="hs-subnav-item disabled" title="Coming soon">
+                  <button
+                    className={`hs-subnav-item ${isActive("/register-courses") ? "active" : ""}`}
+                    onClick={() => navTo("/register-courses")}
+                  >
                     <FileText size={15} />
                     Register Courses
-                    <span className="hs-nav-soon">Soon</span>
                   </button>
                 </div>
               )}
@@ -306,6 +308,7 @@ export function UserLayout({ children, user, onLogout }) {
           <span className="hs-topbar-title">
             {location.pathname === "/home" && "Dashboard"}
             {location.pathname === "/course-requirements" && "Courses"}
+            {location.pathname === "/register-courses" && "Register Courses"}
             {location.pathname === "/rooms" && "Room Booking"}
             {location.pathname === "/maintenance" && "Maintenance"}
             {location.pathname.startsWith("/profile") && "Profile"}
