@@ -261,7 +261,7 @@ export default function Forum() {
                 <div className="hs-post-footer" style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
                   <button 
                     className="hs-post-upvotes" 
-                    style={{ background: "none", border: "none", display: "flex", alignItems: "center", gap: 6, color: "var(--text-secondary)", cursor: "pointer", padding: "4px 8px", borderRadius: 4, transition: "background 0.2s" }}
+                    style={{ background: "none", border: "none", display: "flex", alignItems: "center", gap: 6, color: p.upvotedBy?.includes(user?.id || user?._id) ? "var(--primary)" : "var(--text-secondary)", cursor: "pointer", padding: "4px 8px", borderRadius: 4, transition: "background 0.2s" }}
                     onClick={() => handleUpvote(p._id)}
                     onMouseEnter={(e) => e.currentTarget.style.background = "var(--bg-secondary)"}
                     onMouseLeave={(e) => e.currentTarget.style.background = "none"}

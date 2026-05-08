@@ -22,12 +22,25 @@ function deletePost(id) {
   return ForumPost.findByIdAndDelete(id);
 }
 
-function upvotePost(id) {
-  return ForumPost.findByIdAndUpdate(
-    id,
-    { $inc: { upvotes: 1 } },
-    { new: true },
-  );
+async function upvotePost(id, userId) {
+  const post = await ForumPost.findById(id);
+  if (!post) return null;
+  
+  if (!post.upvotedBy) {
+    post.upvotedBy = [];
+  }
+
+  if (post.upvotedBy.includes(userId)) {
+    // Toggle off if already upvoted
+    post.upvotes = Math.max(0, post.upvotes - 1);
+    post.upvotedBy = post.upvotedBy.filter(uId => uId !== userId);
+  } else {
+    // Toggle on
+    post.upvotes += 1;
+    post.upvotedBy.push(userId);
+  }
+  
+  return post.save();
 }
 
 function createReply(payload) {

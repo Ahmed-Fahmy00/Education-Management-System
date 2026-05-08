@@ -16,6 +16,7 @@ const forumPostSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     body: { type: String, required: true, trim: true },
     upvotes: { type: Number, default: 0, min: 0 },
+    upvotedBy: [{ type: String }],
   },
   { timestamps: true },
 );

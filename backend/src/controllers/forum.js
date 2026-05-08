@@ -45,7 +45,11 @@ async function deletePost(req, res, next) {
 
 async function upvotePost(req, res, next) {
   try {
-    const row = await forumService.upvotePost(req.params.postId);
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(401).json({ message: "User ID missing for upvote" });
+    }
+    const row = await forumService.upvotePost(req.params.postId, userId);
     if (!row) {
       return res.status(404).json({ message: "Post not found" });
     }
