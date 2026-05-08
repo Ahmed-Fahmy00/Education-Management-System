@@ -19,12 +19,13 @@ import {
   createBooking,
   deleteBooking,
   listRooms,
+  getMyBookings,
 } from "../api/rooms";
 import { UserLayout } from "./Home";
 import "../styles/rooms.css";
 
-const TABS = ["Available Rooms", "Room Status", "Timetable", "Calendar"];
-const BOOKER_ROLES = ["staff", "admin", "professor", "ta"];
+const TABS = ["Available Rooms", "Room Status", "Timetable", "Calendar", "My Bookings"];
+const BOOKER_ROLES = ["staff", "admin", "professor", "ta", "student", "instructor"];
 const ROOM_TYPES = ["", "classroom", "lab", "hall"];
 
 function today() {
@@ -74,6 +75,18 @@ function BookModal({ room, user, onClose, onBooked }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+
+    const start = new Date(form.startsAt);
+    const end = new Date(form.endsAt);
+    if (end <= start) {
+      setError("End time must be after start time.");
+      return;
+    }
+    if (start < new Date()) {
+      setError("Booking cannot be in the past.");
+      return;
+    }
+
     setLoading(true);
     try {
       await createBooking({
@@ -84,7 +97,8 @@ function BookModal({ room, user, onClose, onBooked }) {
         startsAt: form.startsAt,
         endsAt: form.endsAt,
       });
-      onBooked();
+      const isPending = ["student", "instructor"].includes(user.role);
+      onBooked(isPending);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -165,7 +179,7 @@ function AvailableRoomsTab({ user }) {
   }
 
   async function handleSearch(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setError("");
     setSuccessMsg("");
     setLoading(true);
@@ -178,10 +192,19 @@ function AvailableRoomsTab({ user }) {
     }
   }
 
-  function handleBooked() {
+  // Auto-search on first load
+  useEffect(() => {
+    handleSearch();
+  }, []);
+
+  function handleBooked(isPending) {
     setBookingRoom(null);
-    setSuccessMsg("Booking created successfully!");
-    handleSearch({ preventDefault: () => {} });
+    setSuccessMsg(
+      isPending
+        ? "Request submitted! Waiting for admin approval."
+        : "Booking confirmed!"
+    );
+    handleSearch();
   }
 
   const canBook = BOOKER_ROLES.includes(user?.role);
@@ -461,7 +484,12 @@ function RoomStatusTab({ user }) {
           onClose={() => setBookingRoom(null)}
           onBooked={() => {
             setBookingRoom(null);
-            setSuccessMsg("Booking created!");
+            const isPending = ["student", "instructor"].includes(user?.role);
+            setSuccessMsg(
+              isPending
+                ? "Request submitted! Waiting for admin approval."
+                : "Booking confirmed!"
+            );
             fetchStatus();
           }}
         />
@@ -481,7 +509,7 @@ function TimetableTab() {
   useEffect(() => {
     listRooms()
       .then(setAllRooms)
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   async function handleFetch(e) {
@@ -607,7 +635,7 @@ function CalendarTab({ user }) {
   useEffect(() => {
     listRooms()
       .then(setAllRooms)
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   function set(field, value) {
@@ -757,6 +785,137 @@ function CalendarTab({ user }) {
   );
 }
 
+function MyBookingsTab({ user }) {
+  const [bookings, setBookings] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    if (!user?.name) return;
+    setError("");
+    setLoading(true);
+    try {
+      setBookings(await getMyBookings(user.name));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const canDelete = BOOKER_ROLES.includes(user?.role);
+
+  async function handleDelete(id) {
+    if (!window.confirm("Cancel this booking?")) return;
+    try {
+      await deleteBooking(id);
+      setBookings((prev) => prev.filter((b) => b._id !== id));
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <p className="results-count" style={{ margin: 0 }}>
+          Bookings made by <strong>{user?.name}</strong>
+        </p>
+        <button className="btn-secondary" onClick={load} disabled={loading} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          <RefreshCw size={14} /> {loading ? "Loading…" : "Refresh"}
+        </button>
+      </div>
+      {error && <p className="form-error">{error}</p>}
+      {bookings !== null && (
+        <div className="results-section">
+          <p className="results-count">
+            {bookings.length} booking{bookings.length !== 1 ? "s" : ""}
+          </p>
+          {bookings.length === 0 ? (
+            <p className="empty-msg">You have no bookings.</p>
+          ) : (
+            <table className="bookings-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Room</th>
+                  <th>Title</th>
+                  <th>Status</th>
+                  {canDelete && <th></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {bookings.map((b) => {
+                  const approvalStatus = b.status || "approved";
+                  const now = new Date();
+                  const start = new Date(b.startsAt);
+                  const end = new Date(b.endsAt);
+                  const timeStatus = end < now ? "past" : start <= now ? "ongoing" : "upcoming";
+                  return (
+                    <tr key={b._id}>
+                      <td>{fmtDate(b.startsAt)}</td>
+                      <td>
+                        <Clock size={12} /> {fmtTime(b.startsAt)} – {fmtTime(b.endsAt)}
+                      </td>
+                      <td>
+                        {b.room?.name ? (
+                          <>
+                            <span className="room-type-tag">{b.room.type}</span>{" "}
+                            {b.room.name}
+                            <br />
+                            <small className="muted">{b.room.building}</small>
+                          </>
+                        ) : (
+                          <span className="muted">—</span>
+                        )}
+                      </td>
+                      <td>{b.title}</td>
+                      <td>
+                        <span
+                          className="status-badge"
+                          style={
+                            approvalStatus === "pending"
+                              ? { background: "#fef9c3", color: "#854d0e" }
+                              : approvalStatus === "approved"
+                                ? { background: "#dcfce7", color: "#16a34a" }
+                                : { background: "#fee2e2", color: "#dc2626" }
+                          }
+                        >
+                          {approvalStatus === "pending" && "⏳ Pending"}
+                          {approvalStatus === "approved" && (timeStatus === "past" ? "✓ Past" : timeStatus === "ongoing" ? "✓ Ongoing" : "✓ Approved")}
+                          {approvalStatus === "rejected" && "✗ Rejected"}
+                        </span>
+                      </td>
+                      {canDelete && (
+                        <td>
+                          {approvalStatus !== "rejected" && timeStatus !== "past" && (
+                            <button
+                              className="btn-delete"
+                              onClick={() => handleDelete(b._id)}
+                              title="Cancel booking"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Rooms() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
@@ -797,6 +956,7 @@ export default function Rooms() {
         {activeTab === 1 && <RoomStatusTab user={user} />}
         {activeTab === 2 && <TimetableTab />}
         {activeTab === 3 && <CalendarTab user={user} />}
+        {activeTab === 4 && <MyBookingsTab user={user} />}
       </div>
     </UserLayout>
   );

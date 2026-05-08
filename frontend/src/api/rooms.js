@@ -45,3 +45,19 @@ export function createBooking(payload) {
 export function deleteBooking(id) {
     return apiFetch(`/api/bookings/${id}`, { method: 'DELETE' })
 }
+
+export function getMyBookings(bookedByName) {
+    const params = new URLSearchParams({ bookedByName })
+    return apiFetch(`/api/bookings?${params}`)
+}
+
+export function getPendingBookings() {
+    return apiFetch('/api/bookings?status=pending')
+}
+
+export function updateBookingStatus(id, status) {
+    return apiFetch(`/api/bookings/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+    })
+}

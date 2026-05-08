@@ -13,6 +13,8 @@ import {
   X,
   ChevronDown,
   CalendarDays,
+  ExternalLink,
+  Clock,
 } from "lucide-react";
 
 import Overview from "./Overview";
@@ -22,6 +24,7 @@ import Staff from "./Staff";
 import Courses from "./Courses";
 import Rooms from "./Rooms";
 import Maintenance from "./Maintenance";
+import BookingRequests from "./BookingRequests";
 import { apiFetch } from "./shared";
 
 import "../../styles/admin.css";
@@ -42,6 +45,7 @@ export default function Admin() {
     COURSE_SECTIONS.includes(section),
   );
   const [pendingCount, setPendingCount] = useState(null);
+  const [pendingBookingCount, setPendingBookingCount] = useState(null);
   const [pageSubtitle, setPageSubtitle] = useState("");
   const [overviewStats, setOverviewStats] = useState({
     pending: null,
@@ -79,6 +83,7 @@ export default function Admin() {
           apiFetch("/api/courses"),
           apiFetch("/api/rooms"),
           apiFetch("/api/users/admin/pending-applications"),
+          apiFetch("/api/bookings?status=pending"),
         ]);
         const parse = async (r) => {
           if (r.status !== "fulfilled") return null;
@@ -88,11 +93,12 @@ export default function Admin() {
             return null;
           }
         };
-        const [sData, stData, cData, rData, aData] = await Promise.all(
+        const [sData, stData, cData, rData, aData, bData] = await Promise.all(
           results.map(parse),
         );
         const pending = aData?.applications?.length ?? 0;
         setPendingCount(pending);
+        setPendingBookingCount(Array.isArray(bData) ? bData.length : 0);
         setOverviewStats({
           pending,
           students: Array.isArray(sData) ? sData.length : null,
@@ -129,6 +135,7 @@ export default function Admin() {
       sessions: "Open Courses",
       rooms: "Rooms",
       maintenance: "Maintenance",
+      "booking-requests": "Booking Requests",
     }[section] ?? "";
 
   return (
@@ -244,6 +251,27 @@ export default function Admin() {
             <Wrench size={18} />
             <span>Maintenance</span>
           </button>
+
+          {/* Book a Room — opens user-facing room booking page */}
+          <button
+            className="nav-item"
+            onClick={() => navigate("/rooms")}
+          >
+            <ExternalLink size={18} />
+            <span>Book a Room</span>
+          </button>
+
+          {/* Booking Requests */}
+          <button
+            className={`nav-item ${section === "booking-requests" ? "active" : ""}`}
+            onClick={() => navTo("booking-requests")}
+          >
+            <Clock size={18} />
+            <span>Booking Requests</span>
+            {pendingBookingCount > 0 && (
+              <span className="nav-badge">{pendingBookingCount}</span>
+            )}
+          </button>
         </nav>
       </aside>
 
@@ -284,6 +312,7 @@ export default function Admin() {
           {section === "sessions" && <CourseSessions />}
           {section === "rooms" && <Rooms onSubtitle={setPageSubtitle} />}
           {section === "maintenance" && <Maintenance />}
+          {section === "booking-requests" && <BookingRequests />}
         </div>
       </div>
     </div>

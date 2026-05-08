@@ -20,6 +20,8 @@ async function listBookings(req, res, next) {
   try {
     const query = {};
     if (req.query.room) query.room = req.query.room;
+    if (req.query.bookedByName) query.bookedByName = req.query.bookedByName;
+    if (req.query.status) query.status = req.query.status;
     const rows = await bookingsService.listBookings(query);
     res.json(rows);
   } catch (err) {
@@ -65,4 +67,19 @@ async function deleteBooking(req, res, next) {
   }
 }
 
-module.exports = { createBooking, listBookings, getCalendarBookings, deleteBooking };
+// PATCH /api/bookings/:id/status
+async function updateStatus(req, res, next) {
+  try {
+    const { status } = req.body;
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "status must be approved or rejected" });
+    }
+    const booking = await bookingsService.updateBookingStatus(req.params.id, status);
+    res.json(booking);
+  } catch (err) {
+    if (err.status === 404) return res.status(404).json({ message: err.message });
+    next(err);
+  }
+}
+
+module.exports = { createBooking, listBookings, getCalendarBookings, deleteBooking, updateStatus };

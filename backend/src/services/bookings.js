@@ -1,6 +1,8 @@
 const Room = require("../models/Room");
 const RoomBooking = require("../models/RoomBooking");
 
+const AUTO_APPROVE_ROLES = ["admin", "staff", "professor", "ta"];
+
 async function createBooking(payload) {
   const startsAt = new Date(payload.startsAt);
   const endsAt = new Date(payload.endsAt);
@@ -22,6 +24,7 @@ async function createBooking(payload) {
 
   const conflict = await RoomBooking.findOne({
     room: payload.room,
+    status: "approved",
     startsAt: { $lt: endsAt },
     endsAt: { $gt: startsAt },
   });
@@ -32,7 +35,11 @@ async function createBooking(payload) {
     throw err;
   }
 
-  return RoomBooking.create({ ...payload, startsAt, endsAt });
+  const status = AUTO_APPROVE_ROLES.includes(payload.bookedByRole)
+    ? "approved"
+    : "pending";
+
+  return RoomBooking.create({ ...payload, startsAt, endsAt, status });
 }
 
 function listBookings(query = {}) {
@@ -57,6 +64,7 @@ async function getCalendarBookings({
   const bookingFilter = {
     startsAt: { $lt: rangeEnd },
     endsAt: { $gt: rangeStart },
+    status: "approved",
   };
 
   if (roomId) bookingFilter.room = Number(roomId);
@@ -101,9 +109,24 @@ async function deleteBooking(id) {
   return booking;
 }
 
+async function updateBookingStatus(id, status) {
+  const booking = await RoomBooking.findByIdAndUpdate(
+    id,
+    { status },
+    { new: true },
+  );
+  if (!booking) {
+    const err = new Error("Booking not found");
+    err.status = 404;
+    throw err;
+  }
+  return booking;
+}
+
 module.exports = {
   createBooking,
   listBookings,
   getCalendarBookings,
   deleteBooking,
+  updateBookingStatus,
 };

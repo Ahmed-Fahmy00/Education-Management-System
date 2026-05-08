@@ -17,6 +17,7 @@ async function listAvailableRooms({ date, type }) {
   start.setHours(0, 0, 0, 0);
 
   const bookedRoomIds = await RoomBooking.find({
+    status: "approved",
     startsAt: { $lt: end },
     endsAt: { $gt: start },
   }).distinct("room");
@@ -56,6 +57,7 @@ async function findAvailableRooms({
   }
 
   const bookedRoomIds = await RoomBooking.find({
+    status: "approved",
     startsAt: { $lt: requestedEnd },
     endsAt: { $gt: requestedStart },
   }).distinct("room");
@@ -86,6 +88,7 @@ async function getRoomsWithStatus({ date, time, type, building }) {
   const rooms = await Room.find(roomFilter).sort({ building: 1, name: 1 });
 
   const activeBookings = await RoomBooking.find({
+    status: "approved",
     startsAt: { $lte: checkAt },
     endsAt: { $gt: checkAt },
   });

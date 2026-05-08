@@ -4,7 +4,7 @@ const { attachUser, requireRole } = require("../middleware/auth");
 
 const router = express.Router();
 
-const bookerRoles = ["staff", "admin", "professor", "ta"];
+const bookerRoles = ["staff", "admin", "professor", "ta", "student", "instructor"];
 
 router.use(attachUser);
 
@@ -12,6 +12,7 @@ router.use(attachUser);
 router.get("/calendar", controller.getCalendarBookings);          // EMS-102
 router.get("/", controller.listBookings);
 router.post("/", requireRole(bookerRoles), controller.createBooking);
+router.patch("/:id/status", requireRole(["admin"]), controller.updateStatus);
 router.delete("/:id", requireRole(bookerRoles), controller.deleteBooking);
 
 module.exports = router;
