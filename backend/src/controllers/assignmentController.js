@@ -129,3 +129,19 @@ exports.getAllCourses = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
+
+// @desc    Get All Courses (List all available courses)
+exports.getAllCourses = async (req, res) => {
+  try {
+    const courses = await Course.find({ isActive: true })
+      .select("_id title code department credits type")
+      .sort("code");
+
+    res.status(200).json({
+      success: true,
+      data: courses
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+  }
+};
