@@ -82,7 +82,7 @@ function StaffModal({ onClose, onSaved }) {
     setSaving(true);
     setError("");
     try {
-      const res = await apiFetch("/api/staff", {
+      const response = await apiFetch("/api/staff", {
         method: "POST",
         headers: { "x-user-role": "admin" },
         body: JSON.stringify({
@@ -92,8 +92,6 @@ function StaffModal({ onClose, onSaved }) {
           role: form.role,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to create staff");
       onSaved();
       onClose();
     } catch (err) {
